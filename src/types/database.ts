@@ -1,0 +1,192 @@
+// Custom type definitions for the database
+export type AppRole = 'credit' | 'audit' | 'coo' | 'operations' | 'managing_director';
+export type ApplicationStatus = 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged';
+export type LoanProductType = 'short_term' | 'long_term';
+export type ApplicationType = 'internal' | 'external';
+export type LoanAmountRange = '100k_300k' | '300k_600k' | '600k_1m' | 'above_1m';
+export type AccountType = 'savings' | 'current' | 'corporate';
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone_number: string;
+  email: string;
+  has_bank_account: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: AppRole;
+  is_active: boolean;
+  failed_login_attempts: number;
+  locked_until: string | null;
+  created_at: string;
+}
+
+export interface AccountApplication {
+  id: string;
+  application_id: string;
+  user_id: string;
+  passport_photo_url: string;
+  account_type: AccountType;
+  full_name: string;
+  nin: string;
+  bvn: string;
+  phone_number: string;
+  address: string;
+  nin_document_url: string;
+  signature_url: string;
+  referee1_name: string;
+  referee1_phone: string;
+  referee1_address: string;
+  referee2_name: string;
+  referee2_phone: string;
+  referee2_address: string;
+  status: ApplicationStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoanApplication {
+  id: string;
+  application_id: string;
+  user_id: string;
+  created_by_admin: string | null;
+  passport_photo_url: string;
+  product_type: LoanProductType;
+  application_type: ApplicationType;
+  full_name: string;
+  ministry_department: string;
+  employee_id: string;
+  payment_slip_url: string;
+  bvn: string;
+  nin: string;
+  nin_document_url: string;
+  loan_amount_range: LoanAmountRange;
+  specific_amount: number;
+  repayment_period_months: number;
+  bank_account_number: string;
+  bank_name: string;
+  address: string;
+  phone_number: string;
+  signature_url: string;
+  terms_accepted: boolean;
+  status: ApplicationStatus;
+  credit_approval: boolean | null;
+  credit_approved_by: string | null;
+  credit_approved_at: string | null;
+  audit_approval: boolean | null;
+  audit_approved_by: string | null;
+  audit_approved_at: string | null;
+  coo_approval: boolean | null;
+  coo_approved_by: string | null;
+  coo_approved_at: string | null;
+  notes: string | null;
+  current_step: number;
+  is_draft: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Guarantor {
+  id: string;
+  loan_application_id: string;
+  full_name: string;
+  salary: number;
+  allowances: number;
+  other_income: number;
+  employee_id: string;
+  bvn: string;
+  phone_number: string;
+  address: string;
+  organization: string;
+  position: string;
+  signature_url: string;
+  acknowledged: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminAction {
+  id: string;
+  admin_user_id: string;
+  action_type: string;
+  target_table: string;
+  target_id: string;
+  previous_status: ApplicationStatus | null;
+  new_status: ApplicationStatus | null;
+  notes: string | null;
+  created_at: string;
+}
+
+// Form step data types for multi-step form
+export interface LoanStep1Data {
+  passport_photo_url: string;
+  product_type: LoanProductType;
+  application_type: ApplicationType;
+  full_name: string;
+  ministry_department: string;
+  employee_id: string;
+  payment_slip_url: string;
+}
+
+export interface LoanStep2Data {
+  bvn: string;
+  nin: string;
+  nin_document_url: string;
+}
+
+export interface LoanStep3Data {
+  loan_amount_range: LoanAmountRange;
+  specific_amount: number;
+  repayment_period_months: number;
+  bank_account_number: string;
+  bank_name: string;
+  address: string;
+  phone_number: string;
+  signature_url: string;
+  terms_accepted: boolean;
+}
+
+export interface GuarantorData {
+  full_name: string;
+  salary: number;
+  allowances: number;
+  other_income: number;
+  employee_id: string;
+  bvn: string;
+  phone_number: string;
+  address: string;
+  organization: string;
+  position: string;
+  signature_url: string;
+  acknowledged: boolean;
+}
+
+export const LOAN_AMOUNT_LABELS: Record<LoanAmountRange, string> = {
+  '100k_300k': '₦100,000 - ₦300,000',
+  '300k_600k': '₦300,000 - ₦600,000',
+  '600k_1m': '₦600,000 - ₦1,000,000',
+  'above_1m': 'Above ₦1,000,000',
+};
+
+export const STATUS_LABELS: Record<ApplicationStatus, string> = {
+  pending: 'Pending',
+  under_review: 'Under Review',
+  approved: 'Approved',
+  declined: 'Declined',
+  flagged: 'Flagged for Review',
+};
+
+export const ROLE_LABELS: Record<AppRole, string> = {
+  credit: 'Credit Department',
+  audit: 'Internal Audit',
+  coo: 'Chief Operations Officer',
+  operations: 'Operations Department',
+  managing_director: 'Managing Director',
+};
