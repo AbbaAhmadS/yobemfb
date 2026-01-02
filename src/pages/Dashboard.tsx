@@ -81,7 +81,7 @@ export default function Dashboard() {
     if (!profile?.has_bank_account && accountApplications.length === 0) {
       setShowBankAccountDialog(true);
     } else {
-      navigate('/apply/loan');
+      navigate('/apply-loan');
     }
   };
 
@@ -164,7 +164,7 @@ export default function Dashboard() {
 
           <Card 
             className="card-elevated group hover:border-primary/50 cursor-pointer transition-all" 
-            onClick={() => navigate('/apply/account')}
+            onClick={() => navigate('/open-account')}
           >
             <CardContent className="p-6 flex items-center gap-4">
               <div className="h-14 w-14 rounded-xl bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
@@ -241,7 +241,7 @@ export default function Dashboard() {
                   <CardTitle className="font-display">Account Applications</CardTitle>
                   <CardDescription>Your bank account applications</CardDescription>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => navigate('/apply/account')}>
+                <Button size="sm" variant="outline" onClick={() => navigate('/open-account')}>
                   <Plus className="h-4 w-4 mr-1" />
                   New
                 </Button>
@@ -254,7 +254,7 @@ export default function Dashboard() {
                 <div className="text-center py-8">
                   <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
                   <p className="text-muted-foreground">No account applications yet</p>
-                  <Button className="mt-4" variant="outline" onClick={() => navigate('/apply/account')}>
+                  <Button className="mt-4" variant="outline" onClick={() => navigate('/open-account')}>
                     Open a Bank Account
                   </Button>
                 </div>
@@ -300,13 +300,13 @@ export default function Dashboard() {
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => {
               setShowBankAccountDialog(false);
-              navigate('/apply/account');
+              navigate('/open-account');
             }}>
               Open Account First
             </Button>
             <Button onClick={() => {
               setShowBankAccountDialog(false);
-              navigate('/apply/loan');
+              navigate('/apply-loan');
             }}>
               I Have an Account
             </Button>
