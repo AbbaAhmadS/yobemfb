@@ -8,7 +8,7 @@ export default function Index() {
     {
       icon: Clock,
       title: 'Quick Processing',
-      description: 'Get your loan application processed within 48 hours of submission.',
+      description: 'Loans are processed and disbursed at the last week of every month to match salary payment timing.',
     },
     {
       icon: Shield,
@@ -25,15 +25,13 @@ export default function Index() {
   const loanTypes = [
     {
       title: 'Short Term Loans',
-      amount: '₦100,000 - ₦600,000',
       description: 'Perfect for immediate needs with flexible repayment periods.',
-      features: ['Quick approval', 'Low interest rates', '3-12 months tenure'],
+      features: ['Quick approval', '3-12 months tenure'],
     },
     {
       title: 'Long Term Loans',
-      amount: '₦600,000 - ₦5,000,000',
       description: 'For major investments and long-term financial goals.',
-      features: ['Higher amounts', 'Extended tenure', 'Competitive rates'],
+      features: ['Higher amounts', 'Extended tenure'],
     },
   ];
 
@@ -56,11 +54,11 @@ export default function Index() {
             </div>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-slide-up">
               Access Affordable Loans{' '}
-              <span className="text-primary">Tailored for You</span>
+              <span className="text-primary">Designed for You</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               Yobe Microfinance Bank offers quick, secure, and affordable loan solutions 
-              exclusively for Yobe State civil servants. Apply online today and get funded within 48 hours.
+              exclusively for Yobe State civil servants. Apply online today — loans are disbursed at the last week of every month.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <Button size="lg" asChild className="text-lg px-8">
@@ -110,8 +108,7 @@ export default function Index() {
               <Card key={loan.title} className="card-elevated overflow-hidden group hover:border-primary/50 transition-colors">
                 <CardContent className="p-0">
                   <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground">
-                    <h3 className="font-display text-2xl font-bold mb-1">{loan.title}</h3>
-                    <p className="text-3xl font-bold text-secondary">{loan.amount}</p>
+                    <h3 className="font-display text-2xl font-bold">{loan.title}</h3>
                   </div>
                   <div className="p-6">
                     <p className="text-muted-foreground mb-4">{loan.description}</p>
