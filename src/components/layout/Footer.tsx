@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
-
 export function Footer() {
-  return (
-    <footer className="bg-primary text-primary-foreground">
+  return <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -69,10 +67,7 @@ export function Footer() {
                 <Phone className="h-4 w-4 text-secondary" />
                 08142576613
               </li>
-              <li className="flex items-center gap-2 text-sm text-primary-foreground/80">
-                <Mail className="h-4 w-4 text-secondary" />
-                info@yobemfb.com
-              </li>
+              
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <MapPin className="h-4 w-4 text-secondary mt-0.5" />
                 <span>Yobe State, Nigeria</span>
@@ -95,6 +90,5 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 }
