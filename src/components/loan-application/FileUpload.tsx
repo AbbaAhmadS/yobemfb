@@ -24,7 +24,7 @@ export function FileUpload({
   description,
   value,
   onChange,
-  maxSizeMB = 5,
+  maxSizeMB = 1,
 }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
@@ -35,7 +35,7 @@ export function FileUpload({
     if (!file) return;
 
     // Check file size
-    if (file.size > maxSizeMB * 1024 * 1024) {
+    if (file.size > maxSizeMB) {
       toast.error(`File size must be less than ${maxSizeMB}MB`);
       return;
     }
