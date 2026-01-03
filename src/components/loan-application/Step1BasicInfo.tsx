@@ -145,8 +145,8 @@ export function Step1BasicInfo({ initialData, onSubmit }: Step1Props) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="internal">Internal (Bank Staff)</SelectItem>
-                  <SelectItem value="external">External (Civil Servant)</SelectItem>
+                  <SelectItem value="internal">Internal (Salary Account with YobeMFB)</SelectItem>
+                  <SelectItem value="external">External (Salary Account with other bank)</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -164,7 +164,7 @@ export function Step1BasicInfo({ initialData, onSubmit }: Step1Props) {
                 folder="loan-applications"
                 accept="image/*"
                 label="Passport Photograph"
-                description="Upload a recent passport photograph (max 5MB)"
+                description="Upload a recent passport photograph (max 1MB)"
                 value={field.value}
                 onChange={field.onChange}
               />
