@@ -31,9 +31,7 @@ export function FileUpload({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    setIsUploading(true);
-
+   
     try {
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
