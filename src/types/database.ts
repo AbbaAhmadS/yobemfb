@@ -124,48 +124,66 @@ export interface AdminAction {
   created_at: string;
 }
 
-// Form step data types for multi-step form
+// Form step data types for multi-step loan form
 export interface LoanStep1Data {
-  passport_photo_url: string;
-  product_type: LoanProductType;
-  application_type: ApplicationType;
   full_name: string;
+  phone_number: string;
+  address: string;
   ministry_department: string;
   employee_id: string;
-  payment_slip_url: string;
+  passport_photo_url: string;
+  application_type: ApplicationType;
 }
 
 export interface LoanStep2Data {
   bvn: string;
   nin: string;
   nin_document_url: string;
+  signature_url: string;
+  payment_slip_url: string;
 }
 
 export interface LoanStep3Data {
+  product_type: LoanProductType;
   loan_amount_range: LoanAmountRange;
   specific_amount: number;
   repayment_period_months: number;
-  bank_account_number: string;
   bank_name: string;
-  address: string;
-  phone_number: string;
-  signature_url: string;
-  terms_accepted: boolean;
+  bank_account_number: string;
 }
 
 export interface GuarantorData {
   full_name: string;
-  salary: number;
-  allowances: number;
-  other_income: number;
-  employee_id: string;
-  bvn: string;
   phone_number: string;
   address: string;
   organization: string;
   position: string;
+  employee_id: string;
+  bvn: string;
+  salary: number;
+  allowances?: number;
+  other_income?: number;
   signature_url: string;
   acknowledged: boolean;
+}
+
+// Account opening form data
+export interface AccountFormData {
+  passport_photo_url: string;
+  account_type: AccountType;
+  full_name: string;
+  nin: string;
+  bvn: string;
+  phone_number: string;
+  address: string;
+  nin_document_url: string;
+  signature_url: string;
+  referee1_name: string;
+  referee1_phone: string;
+  referee1_address: string;
+  referee2_name: string;
+  referee2_phone: string;
+  referee2_address: string;
 }
 
 export const LOAN_AMOUNT_LABELS: Record<LoanAmountRange, string> = {
@@ -189,4 +207,10 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   coo: 'Chief Operations Officer',
   operations: 'Operations Department',
   managing_director: 'Managing Director',
+};
+
+export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  savings: 'Savings Account',
+  current: 'Current Account',
+  corporate: 'Corporate Account',
 };
