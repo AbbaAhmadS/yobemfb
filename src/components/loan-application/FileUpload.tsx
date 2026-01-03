@@ -1,9 +1,14 @@
-import { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, FileText } from 'lucide-react';
+'use client';
+
+import { useState } from 'react';
+import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/use-toast';
+import { createClient } from '@/integrations/supabase/client'; // Adjust if your Supabase client path is different
+
+const supabase = createClient();
 
 interface FileUploadProps {
   bucket: string;
