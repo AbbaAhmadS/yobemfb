@@ -18,6 +18,7 @@ import ApplyLoan from "./pages/ApplyLoan";
 import OpenAccount from "./pages/OpenAccount";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/application/:id" element={<ApplicationDetail />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
