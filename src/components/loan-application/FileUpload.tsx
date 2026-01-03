@@ -1,21 +1,16 @@
-'use client';
-
-import { useState } from 'react';
-import { Upload } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { createClient } from '@/integrations/supabase/client'; // Adjust if your Supabase client path is different
-
-const supabase = createClient();
+import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface FileUploadProps {
   bucket: string;
-  folder?: string;
-  accept: string;
+  folder: string;
+  accept?: string;
   label: string;
-  description: string;
+  description?: string;
   value?: string;
   onChange: (url: string) => void;
 }
@@ -23,110 +18,122 @@ interface FileUploadProps {
 export function FileUpload({
   bucket,
   folder,
-  accept,
+  accept = 'image/*',
   label,
   description,
   value,
   onChange,
 }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(value || null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (file: File) => {
-    // Validate: image only
-    if (!file.type.startsWith('image/')) {
-      toast({
-        variant: 'destructive',
-        description: 'Only image files are allowed.',
-      });
-      return;
-    }
-
-    // Validate: < 1MB only (no resolution check!)
-    if (file.size >= 1 * 1024 * 1024) {
-      toast({
-        variant: 'destructive',
-        description: 'Image must be less than 1MB.',
-      });
-      return;
-    }
-
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
     setIsUploading(true);
 
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${crypto.randomUUID()}.${ext}`;
-      const filePath = folder ? `${folder}/${fileName}` : fileName;
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      const { error } = await supabase.storage
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, { upsert: false });
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
       if (error) throw error;
 
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
 
+      setPreview(urlData.publicUrl);
       onChange(urlData.publicUrl);
-
-      toast({
-        description: 'Image uploaded successfully!',
-      });
-    } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        description: err.message || 'Upload failed. Try again.',
-      });
+      toast.success('File uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleUpload(file);
+  const handleRemove = () => {
+    setPreview(null);
+    onChange('');
+    if (inputRef.current) {
+      inputRef.current.value = '';
     }
   };
 
-  return (
-    <div className="grid w-full items-center gap-1.5">
-      <Label>{label}</Label>
-      <p className="text-sm text-muted-foreground">{description}</p>
+  const isImage = accept.includes('image');
 
-      {value ? (
-        <div className="relative mt-4 inline-block">
-          <img
-            src={value}
-            alt={label}
-            className="max-h-64 rounded-md object-contain border"
-          />
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-            <Label htmlFor={`upload-${label}`} className="cursor-pointer">
-              <Button size="sm" variant="secondary" disabled={isUploading}>
-                {isUploading ? 'Uploading...' : 'Change Image'}
-              </Button>
-            </Label>
-          </div>
-        </div>
-      ) : (
-        <Label
-          htmlFor={`upload-${label}`}
-          className="flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-primary"
-        >
-          <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {isUploading ? 'Uploading...' : 'Click to upload image'}
-          </p>
-        </Label>
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">{label}</label>
+      {description && (
+        <p className="text-xs text-muted-foreground">{description}</p>
       )}
 
-      <Input
-        id={`upload-${label}`}
-        type="file"
-        accept={accept}
-        onChange={handleFileChange}
-        disabled={isUploading}
-        className="hidden"
-      />
+      {preview ? (
+        <div className="relative rounded-lg border bg-muted/30 p-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-8 w-8"
+            onClick={handleRemove}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          {isImage ? (
+            <img
+              src={preview}
+              alt="Preview"
+              className="max-h-48 rounded-lg mx-auto object-contain"
+            />
+          ) : (
+            <div className="flex items-center gap-3">
+              <FileText className="h-10 w-10 text-primary" />
+              <span className="text-sm truncate">Document uploaded</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors',
+            'hover:border-primary hover:bg-primary/5',
+            isUploading && 'opacity-50 pointer-events-none'
+          )}
+          onClick={() => inputRef.current?.click()}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept={accept}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <div className="flex flex-col items-center gap-2">
+            {isImage ? (
+              <ImageIcon className="h-10 w-10 text-muted-foreground" />
+            ) : (
+              <Upload className="h-10 w-10 text-muted-foreground" />
+            )}
+            <p className="text-sm text-muted-foreground">
+              {isUploading ? 'Uploading...' : 'Click to upload'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
