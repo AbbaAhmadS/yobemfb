@@ -40,15 +40,25 @@ export default function Auth() {
     confirmPassword: '',
   });
 
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, isAdmin, roles } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      // If user is an admin, redirect to admin dashboard
+      if (isAdmin) {
+        // Credit admins go to credit dashboard
+        if (roles.includes('credit')) {
+          navigate('/admin/credit-dashboard');
+        } else {
+          navigate('/admin/dashboard');
+        }
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, roles, navigate]);
 
   useEffect(() => {
     setIsSignup(searchParams.get('mode') === 'signup');

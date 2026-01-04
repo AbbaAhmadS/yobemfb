@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.setup-admins]
 verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
+
+[functions.analyze-application]
+verify_jwt = true

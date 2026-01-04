@@ -12,16 +12,21 @@ interface FileUploadProps {
   label: string;
   description?: string;
   value?: string;
+  applicationId?: string;
   onChange: (url: string) => void;
 }
+
+// Maximum file size: 1MB (1,048,576 bytes)
+const MAX_FILE_SIZE = 1048576;
 
 export function FileUpload({
   bucket,
   folder,
-  accept = 'image/*',
+  accept = 'image/jpeg,image/jpg,image/png,image/webp,application/pdf',
   label,
   description,
   value,
+  applicationId,
   onChange,
 }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -31,25 +36,29 @@ export function FileUpload({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Validate file size - max 1MB (1,048,576 bytes)
-    const MAX_FILE_SIZE = 1048576; // 1MB in bytes
+
+    // Validate file size ONLY - 1MB max (1,048,576 bytes)
+    // NO dimension, width, height, aspect ratio, or resolution checks
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('Image must be 1MB or smaller.');
+      toast.error('File must be 1MB or smaller.');
       if (inputRef.current) {
         inputRef.current.value = '';
       }
       return;
     }
-    
+
     setIsUploading(true);
 
     try {
-      // Generate unique filename
+      // Generate unique filename with organized folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      // Use organized folder structure: /uploads/loan-applications/{applicationId}/
+      const basePath = applicationId
+        ? `uploads/loan-applications/${applicationId}`
+        : folder;
+      const fileName = `${basePath}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // Upload to Supabase Storage
+      // Upload to storage - NO transformation, compression, or resizing
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, {
@@ -69,7 +78,7 @@ export function FileUpload({
       toast.success('File uploaded successfully');
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload file');
+      toast.error('Failed to upload file. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -103,7 +112,7 @@ export function FileUpload({
           >
             <X className="h-4 w-4" />
           </Button>
-          {isImage ? (
+          {isImage && !preview.endsWith('.pdf') ? (
             <img
               src={preview}
               alt="Preview"
@@ -139,7 +148,10 @@ export function FileUpload({
               <Upload className="h-10 w-10 text-muted-foreground" />
             )}
             <p className="text-sm text-muted-foreground">
-              {isUploading ? 'Uploading...' : 'Click to upload'}
+              {isUploading ? 'Uploading...' : 'Click to upload (max 1MB)'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              JPG, PNG, WEBP, PDF
             </p>
           </div>
         </div>

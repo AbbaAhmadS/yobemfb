@@ -23,7 +23,9 @@ import {
   Clock,
   AlertTriangle,
   Download,
-  ExternalLink
+  ExternalLink,
+  Brain,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -56,6 +58,10 @@ export default function ApplicationDetail() {
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declineNotes, setDeclineNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string>('');
 
   useEffect(() => {
     if (user && id) {
@@ -104,6 +110,61 @@ export default function ApplicationDetail() {
       navigate('/admin/dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!application) return;
+    
+    setIsDownloadingPdf(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pdf', {
+        body: { applicationId: application.id }
+      });
+
+      if (error) throw error;
+
+      // Create blob and download
+      const blob = new Blob([data], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${application.application_id}-application.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download PDF');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!application) return;
+    
+    setIsAnalyzing(true);
+    setShowAnalysisDialog(true);
+    setAnalysisResult('');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-application', {
+        body: { applicationId: application.id }
+      });
+
+      if (error) throw error;
+      
+      setAnalysisResult(data.analysis);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error('Failed to analyze application');
+      setAnalysisResult('Failed to generate analysis. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -255,7 +316,7 @@ export default function ApplicationDetail() {
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
@@ -269,18 +330,36 @@ export default function ApplicationDetail() {
             </div>
           </div>
 
-          {canApprove() && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowDeclineDialog(true)} disabled={isUpdating}>
-                <XCircle className="h-4 w-4 mr-2" />
-                Decline
-              </Button>
-              <Button onClick={handleApprove} disabled={isUpdating}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Approve
-              </Button>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleDownloadPdf} disabled={isDownloadingPdf}>
+              {isDownloadingPdf ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Download PDF
+            </Button>
+            <Button variant="outline" onClick={handleAnalyze} disabled={isAnalyzing}>
+              {isAnalyzing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Brain className="h-4 w-4 mr-2" />
+              )}
+              AI Analysis
+            </Button>
+            {canApprove() && (
+              <>
+                <Button variant="outline" onClick={() => setShowDeclineDialog(true)} disabled={isUpdating}>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Decline
+                </Button>
+                <Button onClick={handleApprove} disabled={isUpdating}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -539,6 +618,38 @@ export default function ApplicationDetail() {
             </Button>
             <Button variant="destructive" onClick={handleDecline} disabled={isUpdating || !declineNotes.trim()}>
               Decline Application
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Analysis Dialog */}
+      <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              AI Risk Analysis
+            </DialogTitle>
+            <DialogDescription>
+              AI-powered analysis of loan application {application?.application_id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {isAnalyzing ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Analyzing application...</span>
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+                {analysisResult}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAnalysisDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
