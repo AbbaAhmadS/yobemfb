@@ -24,11 +24,13 @@ export function ProtectedRoute({ children, requireAdmin = false, allowedRoles }:
   }
 
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Redirect admin routes to admin login, regular routes to auth
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    return <Navigate to={isAdminRoute ? "/admin/login" : "/auth"} state={{ from: location }} replace />;
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
