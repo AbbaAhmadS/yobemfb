@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AIChatbot } from "@/components/AIChatbot";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
@@ -18,6 +19,8 @@ import ApplyLoan from "./pages/ApplyLoan";
 import OpenAccount from "./pages/OpenAccount";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import CreditAdminDashboard from "./pages/admin/CreditAdminDashboard";
+import CreateApplication from "./pages/admin/CreateApplication";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +62,21 @@ const App = () => (
                 <AdminDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/admin/credit-dashboard" element={
+              <ProtectedRoute requireAdmin allowedRoles={['credit']}>
+                <CreditAdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/create-application" element={
+              <ProtectedRoute requireAdmin allowedRoles={['credit']}>
+                <CreateApplication />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/applications/:id" element={
+              <ProtectedRoute requireAdmin>
+                <ApplicationDetail />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/application/:id" element={
               <ProtectedRoute requireAdmin>
                 <ApplicationDetail />
@@ -67,6 +85,8 @@ const App = () => (
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          {/* AI Chatbot available on all pages */}
+          <AIChatbot />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

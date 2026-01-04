@@ -4,20 +4,31 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   LayoutDashboard, FileText, Users, LogOut, Moon, Sun,
-  CheckCircle, Clock, XCircle, AlertTriangle, Building2
+  CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
+import { toast } from 'sonner';
 
 type AdminRole = 'credit' | 'audit' | 'coo' | 'operations' | 'managing_director';
 
+const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; className: string }> = {
+  pending: { icon: Clock, className: 'status-pending' },
+  under_review: { icon: AlertTriangle, className: 'status-under_review' },
+  approved: { icon: CheckCircle, className: 'status-approved' },
+  declined: { icon: XCircle, className: 'status-declined' },
+  flagged: { icon: AlertTriangle, className: 'status-flagged' },
+};
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
+  const { user, signOut, roles } = useAuth();
   const [role, setRole] = useState<AdminRole | null>(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [applications, setApplications] = useState<LoanApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -31,38 +42,63 @@ export default function AdminDashboard() {
       return;
     }
 
-    const fetchRole = async () => {
+    const fetchRoleAndRedirect = async () => {
       const { data } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
+        .eq('is_active', true)
         .single();
 
       if (data) {
-        setRole(data.role as AdminRole);
+        const userRole = data.role as AdminRole;
+        setRole(userRole);
+        
+        // Redirect credit admins to their dedicated dashboard
+        if (userRole === 'credit') {
+          navigate('/admin/credit-dashboard');
+          return;
+        }
       } else {
         navigate('/admin/login');
       }
     };
 
-    const fetchStats = async () => {
-      const { data: loans } = await supabase
-        .from('loan_applications')
-        .select('status');
-
-      if (loans) {
-        setStats({
-          total: loans.length,
-          pending: loans.filter(l => l.status === 'pending').length,
-          approved: loans.filter(l => l.status === 'approved').length,
-          declined: loans.filter(l => l.status === 'declined').length,
-        });
-      }
-    };
-
-    fetchRole();
-    fetchStats();
+    fetchRoleAndRedirect();
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (role && role !== 'credit') {
+      fetchApplications();
+    }
+  }, [role]);
+
+  const fetchApplications = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('loan_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const apps = (data || []) as LoanApplication[];
+      setApplications(apps);
+
+      setStats({
+        total: apps.length,
+        pending: apps.filter((a) => a.status === 'pending').length,
+        approved: apps.filter((a) => a.status === 'approved').length,
+        declined: apps.filter((a) => a.status === 'declined').length,
+      });
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      toast.error('Failed to load applications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -83,6 +119,33 @@ export default function AdminDashboard() {
       managing_director: 'Managing Director',
     };
     return labels[role];
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-NG', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getStatusBadge = (status: ApplicationStatus) => {
+    const config = statusConfig[status];
+    const Icon = config.icon;
+    return (
+      <Badge variant="outline" className={config.className}>
+        <Icon className="h-3 w-3 mr-1" />
+        {STATUS_LABELS[status]}
+      </Badge>
+    );
   };
 
   if (!role) return null;
@@ -188,14 +251,42 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* Recent Applications */}
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>Recent Applications</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-center py-8">
-              Application list and management features will be implemented here.
-            </p>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : applications.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No applications found.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {applications.slice(0, 10).map((app) => (
+                  <div
+                    key={app.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/admin/applications/${app.id}`)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{app.full_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {app.application_id} • {formatAmount(app.specific_amount)} • {formatDate(app.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    {getStatusBadge(app.status)}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
