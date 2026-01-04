@@ -31,7 +31,19 @@ export function FileUpload({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-   
+    
+    // Validate file size - max 1MB (1,048,576 bytes)
+    const MAX_FILE_SIZE = 1048576; // 1MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('Image must be 1MB or smaller.');
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      return;
+    }
+    
+    setIsUploading(true);
+
     try {
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
