@@ -6,8 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface FileUploadProps {
-  bucket: string;
-  folder: string;
+  bucket?: string;
+  folder?: string;
   accept?: string;
   label: string;
   description?: string;
@@ -19,9 +19,18 @@ interface FileUploadProps {
 // Maximum file size: 1MB (1,048,576 bytes)
 const MAX_FILE_SIZE = 1048576;
 
+// Accepted file types
+const ACCEPTED_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+];
+
 export function FileUpload({
-  bucket,
-  folder,
+  bucket = 'loan-uploads',
+  folder = 'uploads',
   accept = 'image/jpeg,image/jpg,image/png,image/webp,application/pdf',
   label,
   description,
@@ -47,11 +56,20 @@ export function FileUpload({
       return;
     }
 
+    // Validate file type
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      toast.error('File type not supported. Please use JPG, PNG, WEBP, or PDF.');
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      return;
+    }
+
     setIsUploading(true);
 
     try {
       // Generate unique filename with organized folder structure
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       // Use organized folder structure: /uploads/loan-applications/{applicationId}/
       const basePath = applicationId
         ? `uploads/loan-applications/${applicationId}`
@@ -66,7 +84,10 @@ export function FileUpload({
           upsert: false,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -76,9 +97,13 @@ export function FileUpload({
       setPreview(urlData.publicUrl);
       onChange(urlData.publicUrl);
       toast.success('File uploaded successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload file. Please try again.');
+      if (error?.message?.includes('Bucket not found')) {
+        toast.error('Storage not configured. Please contact support.');
+      } else {
+        toast.error('Failed to upload file. Please try again.');
+      }
     } finally {
       setIsUploading(false);
     }
@@ -92,7 +117,8 @@ export function FileUpload({
     }
   };
 
-  const isImage = accept.includes('image');
+  const isPDF = preview?.toLowerCase().endsWith('.pdf') || 
+                (preview && !preview.match(/\.(jpg|jpeg|png|webp|gif)$/i));
 
   return (
     <div className="space-y-2">
@@ -112,7 +138,7 @@ export function FileUpload({
           >
             <X className="h-4 w-4" />
           </Button>
-          {isImage && !preview.endsWith('.pdf') ? (
+          {!isPDF ? (
             <img
               src={preview}
               alt="Preview"
@@ -142,7 +168,7 @@ export function FileUpload({
             className="hidden"
           />
           <div className="flex flex-col items-center gap-2">
-            {isImage ? (
+            {accept.includes('image') ? (
               <ImageIcon className="h-10 w-10 text-muted-foreground" />
             ) : (
               <Upload className="h-10 w-10 text-muted-foreground" />

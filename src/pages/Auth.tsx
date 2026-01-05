@@ -313,6 +313,14 @@ export default function Auth() {
           </CardContent>
 
           <CardFooter className="flex flex-col gap-4 pt-0">
+            {!isSignup && (
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-primary hover:underline self-end -mt-2"
+              >
+                Forgot password?
+              </Link>
+            )}
             <div className="relative w-full">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t" />

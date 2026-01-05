@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AIChatbot } from "@/components/AIChatbot";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Terms from "./pages/Terms";
@@ -22,6 +23,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import CreditAdminDashboard from "./pages/admin/CreditAdminDashboard";
 import CreateApplication from "./pages/admin/CreateApplication";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,7 @@ const App = () => (
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />
@@ -65,6 +68,11 @@ const App = () => (
             <Route path="/admin/credit-dashboard" element={
               <ProtectedRoute requireAdmin allowedRoles={['credit']}>
                 <CreditAdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/analytics" element={
+              <ProtectedRoute requireAdmin>
+                <AnalyticsDashboard />
               </ProtectedRoute>
             } />
             <Route path="/admin/create-application" element={
