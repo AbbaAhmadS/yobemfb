@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   LayoutDashboard, FileText, Users, LogOut, Moon, Sun,
-  CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard
+  CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard, BarChart3
 } from 'lucide-react';
 import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
 import { toast } from 'sonner';
@@ -163,6 +163,14 @@ export default function AdminDashboard() {
           <Button variant="secondary" className="w-full justify-start gap-2">
             <LayoutDashboard className="h-4 w-4" />
             Dashboard
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-2"
+            onClick={() => navigate('/admin/analytics')}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Analytics
           </Button>
           {role !== 'operations' && (
             <Button variant="ghost" className="w-full justify-start gap-2">

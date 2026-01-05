@@ -1,9 +1,21 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Clock, Users, CheckCircle, Banknote, FileText } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Users, CheckCircle, Banknote, FileText, MessageCircle, Bot, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function Index() {
+  const [showChatPrompt, setShowChatPrompt] = useState(false);
+
+  useEffect(() => {
+    // Show AI assistant prompt after 3 seconds
+    const timer = setTimeout(() => {
+      setShowChatPrompt(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const features = [
     {
       icon: Clock,
@@ -43,6 +55,37 @@ export default function Index() {
 
   return (
     <div className="overflow-hidden">
+      {/* AI Chat Prompt Popup */}
+      {showChatPrompt && (
+        <div className="fixed bottom-24 right-6 z-40 animate-bounce-in">
+          <div className="relative bg-card border border-primary/20 rounded-2xl shadow-xl p-4 max-w-[280px]">
+            <button 
+              onClick={() => setShowChatPrompt(false)}
+              className="absolute -top-2 -right-2 h-6 w-6 bg-muted rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/80"
+            >
+              ×
+            </button>
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm mb-1">Hi there! 👋</p>
+                <p className="text-xs text-muted-foreground">
+                  Need help with loans? I'm available 24/7 to answer your questions!
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1 text-xs text-primary">
+              <Sparkles className="h-3 w-3" />
+              <span>Click the chat icon to start</span>
+            </div>
+          </div>
+          {/* Arrow pointing to chat button */}
+          <div className="absolute -bottom-2 right-8 w-4 h-4 bg-card border-b border-r border-primary/20 transform rotate-45" />
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/10" />
@@ -71,6 +114,32 @@ export default function Index() {
                 <Link to="/about">Learn More</Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Assistant Banner */}
+      <section className="py-8 bg-primary/5 border-y border-primary/10">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center animate-pulse-glow">
+                <MessageCircle className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="font-display font-semibold text-lg">24/7 AI Loan Assistant</p>
+                <p className="text-sm text-muted-foreground">
+                  Get instant answers to your loan questions anytime, anywhere
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => {
+              const chatButton = document.querySelector('[data-chat-trigger]') as HTMLButtonElement;
+              if (chatButton) chatButton.click();
+            }}>
+              <Bot className="h-4 w-4 mr-2" />
+              Chat Now
+            </Button>
           </div>
         </div>
       </section>
@@ -178,7 +247,7 @@ export default function Index() {
             </Button>
           </div>
           <p className="mt-6 text-sm text-primary-foreground/60">
-            Have questions? Call us at <strong>08142576613</strong>
+            Have questions? Call us at <strong>08142576613</strong> or chat with our AI assistant 24/7
           </p>
         </div>
       </section>
