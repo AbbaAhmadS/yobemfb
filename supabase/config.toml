@@ -1,7 +1,7 @@
 project_id = "sflezpnanoibkbzpzwxl"
 
 [functions.generate-pdf]
-verify_jwt = true
+verify_jwt = false
 
 [functions.chat]
 verify_jwt = false
