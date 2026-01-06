@@ -492,6 +492,65 @@ export type Database = {
         }
         Relationships: []
       }
+      guarantors_masked: {
+        Row: {
+          acknowledged: boolean | null
+          address: string | null
+          bvn: string | null
+          created_at: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string | null
+          loan_application_id: string | null
+          organization: string | null
+          phone_number: string | null
+          position: string | null
+          salary_range: string | null
+          signature_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          address?: never
+          bvn?: never
+          created_at?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          loan_application_id?: string | null
+          organization?: string | null
+          phone_number?: never
+          position?: string | null
+          salary_range?: never
+          signature_url?: never
+          updated_at?: string | null
+        }
+        Update: {
+          acknowledged?: boolean | null
+          address?: never
+          bvn?: never
+          created_at?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          loan_application_id?: string | null
+          organization?: string | null
+          phone_number?: never
+          position?: string | null
+          salary_range?: never
+          signature_url?: never
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guarantors_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       generate_application_id: { Args: { prefix: string }; Returns: string }
@@ -575,6 +634,33 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "account_applications"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_full_guarantor: {
+        Args: { guarantor_id: string }
+        Returns: {
+          acknowledged: boolean | null
+          address: string
+          allowances: number | null
+          bvn: string
+          created_at: string
+          employee_id: string
+          full_name: string
+          id: string
+          loan_application_id: string
+          organization: string
+          other_income: number | null
+          phone_number: string
+          position: string
+          salary: number
+          signature_url: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "guarantors"
           isOneToOne: false
           isSetofReturn: true
         }
