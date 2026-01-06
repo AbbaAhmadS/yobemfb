@@ -149,17 +149,62 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // 1. Verify authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error('PDF generation request missing authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // 2. Create client with user's token to enforce RLS
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // 3. Verify user authentication
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
+    if (authError || !user) {
+      console.error('PDF generation auth failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { applicationId } = await req.json();
 
     if (!applicationId) {
-      throw new Error('Application ID is required');
+      return new Response(
+        JSON.stringify({ error: 'Application ID is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log('Generating PDF for application:', applicationId);
+    // 4. Verify user has RLS access to this application
+    const { data: accessCheck, error: accessError } = await userSupabase
+      .from('loan_applications')
+      .select('id')
+      .eq('id', applicationId)
+      .maybeSingle();
+    
+    if (accessError || !accessCheck) {
+      console.error(`PDF generation access denied for user ${user.id} to application ${applicationId}`);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden - you do not have access to this application' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Generating PDF for application ${applicationId} by user ${user.id}`);
+
+    // 5. Now safe to use service key for full data fetch
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch loan application
     const { data: application, error: appError } = await supabase
@@ -170,7 +215,10 @@ serve(async (req) => {
 
     if (appError) {
       console.error('Error fetching application:', appError);
-      throw new Error('Application not found');
+      return new Response(
+        JSON.stringify({ error: 'Application not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Fetch guarantors
@@ -202,7 +250,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: errorMessage }),
       {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
