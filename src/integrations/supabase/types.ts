@@ -319,6 +319,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_access_logs: {
+        Row: {
+          access_type: string
+          accessed_at: string
+          accessed_profile_id: string
+          accessor_role: string
+          accessor_user_id: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          access_type?: string
+          accessed_at?: string
+          accessed_profile_id: string
+          accessor_role: string
+          accessor_user_id: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string
+          accessed_profile_id?: string
+          accessor_role?: string
+          accessor_user_id?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -542,6 +575,25 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "account_applications"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_profile_with_audit: {
+        Args: { profile_user_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          has_bank_account: boolean | null
+          id: string
+          phone_number: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
           isOneToOne: false
           isSetofReturn: true
         }
