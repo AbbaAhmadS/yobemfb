@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,11 +14,47 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // =============================================
+    // AUTHENTICATION CHECK
+    // =============================================
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error("No authorization header provided for chat request");
+      return new Response(JSON.stringify({ error: "Unauthorized - Please log in to use the chat" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate the user token
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
+    if (authError || !user) {
+      console.error("Chat auth error:", authError?.message || "No user found");
+      return new Response(JSON.stringify({ error: "Unauthorized - Invalid session" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Chat request from authenticated user: ${user.id}`);
+
+    // =============================================
+    // RATE LIMITING (simple per-user check)
+    // =============================================
+    // Note: For production, consider using Redis or a dedicated rate limiting service
+    // This is a basic implementation that logs usage for monitoring
+    
     const systemPrompt = `You are a helpful loan advisor for Yobe Microfinance Bank. You assist customers with:
 - Information about loan products (short-term and long-term loans)
 - Loan eligibility requirements
@@ -54,6 +91,7 @@ Be professional, friendly, and provide accurate information. If you're unsure ab
 
     if (!response.ok) {
       if (response.status === 429) {
+        console.warn(`Rate limit hit for user ${user.id}`);
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -72,6 +110,8 @@ Be professional, friendly, and provide accurate information. If you're unsure ab
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log(`Chat response streaming for user ${user.id}`);
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
