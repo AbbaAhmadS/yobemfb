@@ -384,10 +384,168 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      account_applications_masked: {
+        Row: {
+          account_type: Database["public"]["Enums"]["account_type"] | null
+          address: string | null
+          application_id: string | null
+          bvn: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          nin: string | null
+          nin_document_url: string | null
+          notes: string | null
+          passport_photo_url: string | null
+          phone_number: string | null
+          referee1_address: string | null
+          referee1_name: string | null
+          referee1_phone: string | null
+          referee2_address: string | null
+          referee2_name: string | null
+          referee2_phone: string | null
+          signature_url: string | null
+          status: Database["public"]["Enums"]["application_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          address?: never
+          application_id?: string | null
+          bvn?: never
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          nin?: never
+          nin_document_url?: never
+          notes?: string | null
+          passport_photo_url?: never
+          phone_number?: never
+          referee1_address?: never
+          referee1_name?: never
+          referee1_phone?: never
+          referee2_address?: never
+          referee2_name?: never
+          referee2_phone?: never
+          signature_url?: never
+          status?: Database["public"]["Enums"]["application_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          address?: never
+          application_id?: string | null
+          bvn?: never
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          nin?: never
+          nin_document_url?: never
+          notes?: string | null
+          passport_photo_url?: never
+          phone_number?: never
+          referee1_address?: never
+          referee1_name?: never
+          referee1_phone?: never
+          referee2_address?: never
+          referee2_name?: never
+          referee2_phone?: never
+          signature_url?: never
+          status?: Database["public"]["Enums"]["application_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_application_id: { Args: { prefix: string }; Returns: string }
+      get_account_applications_for_operations: {
+        Args: never
+        Returns: {
+          account_type: string
+          address: string
+          application_id: string
+          bvn: string
+          created_at: string
+          full_name: string
+          id: string
+          nin: string
+          notes: string
+          phone_number: string
+          status: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_all_full_account_applications: {
+        Args: never
+        Returns: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          address: string
+          application_id: string
+          bvn: string
+          created_at: string
+          full_name: string
+          id: string
+          nin: string
+          nin_document_url: string
+          notes: string | null
+          passport_photo_url: string
+          phone_number: string
+          referee1_address: string
+          referee1_name: string
+          referee1_phone: string
+          referee2_address: string
+          referee2_name: string
+          referee2_phone: string
+          signature_url: string
+          status: Database["public"]["Enums"]["application_status"] | null
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "account_applications"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_full_account_application: {
+        Args: { app_id: string }
+        Returns: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          address: string
+          application_id: string
+          bvn: string
+          created_at: string
+          full_name: string
+          id: string
+          nin: string
+          nin_document_url: string
+          notes: string | null
+          passport_photo_url: string
+          phone_number: string
+          referee1_address: string
+          referee1_name: string
+          referee1_phone: string
+          referee2_address: string
+          referee2_name: string
+          referee2_phone: string
+          signature_url: string
+          status: Database["public"]["Enums"]["application_status"] | null
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "account_applications"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
