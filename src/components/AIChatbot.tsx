@@ -5,13 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
 };
-
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,26 +39,60 @@ export function AIChatbot() {
   }, [isOpen]);
 
   const streamChat = useCallback(async (userMessages: Message[], onDelta: (text: string) => void, onDone: () => void) => {
-    const resp = await fetch(CHAT_URL, {
+    // Get the current session for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('Please log in to use the chat assistant');
+    }
+
+    const resp = await supabase.functions.invoke('chat', {
+      body: { messages: userMessages },
+    });
+
+    if (resp.error) {
+      throw new Error(resp.error.message || 'Failed to start chat');
+    }
+
+    // Handle non-streaming response (fallback if edge function returns JSON)
+    if (resp.data && typeof resp.data === 'object' && !resp.data.body) {
+      if (resp.data.error) {
+        throw new Error(resp.data.error);
+      }
+      // If we get a direct response object, extract content
+      const content = resp.data.choices?.[0]?.message?.content || resp.data.content || '';
+      if (content) {
+        onDelta(content);
+      }
+      onDone();
+      return;
+    }
+
+    // For streaming, we need to use fetch directly with proper auth
+    const streamResp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
 
-    if (!resp.ok || !resp.body) {
-      if (resp.status === 429) {
+    if (!streamResp.ok || !streamResp.body) {
+      if (streamResp.status === 401) {
+        throw new Error('Please log in to use the chat assistant');
+      }
+      if (streamResp.status === 429) {
         throw new Error('Too many requests. Please try again later.');
       }
-      if (resp.status === 402) {
+      if (streamResp.status === 402) {
         throw new Error('Service temporarily unavailable.');
       }
       throw new Error('Failed to start chat');
     }
 
-    const reader = resp.body.getReader();
+    const reader = streamResp.body.getReader();
     const decoder = new TextDecoder();
     let textBuffer = '';
     let streamDone = false;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SignedImage } from '@/components/ui/signed-image';
 import { LoanStep1Data, LoanStep2Data, LoanStep3Data, GuarantorData, LOAN_AMOUNT_LABELS } from '@/types/database';
 import { ArrowLeft, Send, User, FileText, CreditCard, Users, Loader2 } from 'lucide-react';
 
@@ -96,16 +97,18 @@ export function Step5Review({
             <div className="flex gap-4">
               <div>
                 <span className="text-muted-foreground block">Passport Photo</span>
-                <img 
-                  src={step1Data.passport_photo_url} 
+                <SignedImage 
+                  storedPath={step1Data.passport_photo_url} 
+                  bucket="loan-uploads"
                   alt="Passport" 
                   className="h-16 w-16 rounded-lg object-cover mt-1"
                 />
               </div>
               <div>
                 <span className="text-muted-foreground block">Signature</span>
-                <img 
-                  src={step2Data.signature_url} 
+                <SignedImage 
+                  storedPath={step2Data.signature_url}
+                  bucket="loan-uploads"
                   alt="Signature" 
                   className="h-16 rounded-lg object-contain mt-1 bg-white"
                 />

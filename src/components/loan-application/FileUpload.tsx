@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,7 +13,7 @@ interface FileUploadProps {
   description?: string;
   value?: string;
   applicationId?: string;
-  onChange: (url: string) => void;
+  onChange: (path: string) => void; // Now stores path, not full URL
 }
 
 // Maximum file size: 1MB (1,048,576 bytes)
@@ -39,8 +39,46 @@ export function FileUpload({
   onChange,
 }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(value || null);
+  const [preview, setPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Generate signed URL for preview when value changes
+  useEffect(() => {
+    if (!value) {
+      setPreview(null);
+      return;
+    }
+
+    // Generate signed URL for the stored path
+    const generatePreview = async () => {
+      try {
+        // Extract path from URL if it's a full URL (legacy data)
+        let filePath = value;
+        if (value.includes('/storage/v1/object/')) {
+          const match = value.match(/\/storage\/v1\/object\/(?:public|sign)\/[^/]+\/(.+?)(?:\?|$)/);
+          if (match) {
+            filePath = match[1];
+          }
+        }
+
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(filePath, 3600);
+
+        if (error) {
+          console.error('Error creating preview URL:', error);
+          setPreview(value); // Fallback to stored value
+        } else {
+          setPreview(data.signedUrl);
+        }
+      } catch (err) {
+        console.error('Failed to generate preview:', err);
+        setPreview(value);
+      }
+    };
+
+    generatePreview();
+  }, [value, bucket]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,13 +127,20 @@ export function FileUpload({
         throw error;
       }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
+      // Generate signed URL for preview
+      const { data: signedData, error: signError } = await supabase.storage
         .from(bucket)
-        .getPublicUrl(data.path);
+        .createSignedUrl(data.path, 3600);
 
-      setPreview(urlData.publicUrl);
-      onChange(urlData.publicUrl);
+      if (signError) {
+        console.error('Error creating signed URL:', signError);
+        toast.error('File uploaded but preview unavailable');
+      } else {
+        setPreview(signedData.signedUrl);
+      }
+      
+      // Store the PATH only, not the full URL
+      onChange(data.path);
       toast.success('File uploaded successfully');
     } catch (error: any) {
       console.error('Upload error:', error);

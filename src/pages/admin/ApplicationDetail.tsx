@@ -23,7 +23,6 @@ import {
   Clock,
   AlertTriangle,
   Download,
-  ExternalLink,
   Brain,
   Loader2
 } from 'lucide-react';
@@ -38,6 +37,8 @@ import {
   LOAN_AMOUNT_LABELS
 } from '@/types/database';
 import { toast } from 'sonner';
+import { SignedImage } from '@/components/ui/signed-image';
+import { SignedDocumentLink } from '@/components/ui/signed-document-link';
 
 const statusConfig: Record<ApplicationStatus, { className: string; icon: React.ElementType }> = {
   pending: { className: 'status-pending', icon: Clock },
@@ -376,8 +377,9 @@ export default function ApplicationDetail() {
               </CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-4">
-                  <img
-                    src={application.passport_photo_url}
+                  <SignedImage
+                    storedPath={application.passport_photo_url}
+                    bucket="loan-uploads"
                     alt="Passport"
                     className="h-24 w-24 rounded-lg object-cover"
                   />
@@ -494,36 +496,21 @@ export default function ApplicationDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <a
-                  href={application.nin_document_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="flex-1 text-sm">NIN Document</span>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </a>
-                <a
-                  href={application.payment_slip_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="flex-1 text-sm">Payment Slip</span>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </a>
-                <a
-                  href={application.signature_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="flex-1 text-sm">Signature</span>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </a>
+                <SignedDocumentLink
+                  storedPath={application.nin_document_url}
+                  bucket="loan-uploads"
+                  label="NIN Document"
+                />
+                <SignedDocumentLink
+                  storedPath={application.payment_slip_url}
+                  bucket="loan-uploads"
+                  label="Payment Slip"
+                />
+                <SignedDocumentLink
+                  storedPath={application.signature_url}
+                  bucket="loan-uploads"
+                  label="Signature"
+                />
               </CardContent>
             </Card>
 
