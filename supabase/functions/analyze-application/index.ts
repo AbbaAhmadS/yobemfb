@@ -15,12 +15,71 @@ serve(async (req) => {
     const { applicationId } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // =============================================
+    // AUTHORIZATION CHECK - Verify caller has access
+    // =============================================
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(JSON.stringify({ error: "Unauthorized - No auth token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Create client with user's token to verify RLS access
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
+    if (authError || !user) {
+      console.error("Auth error:", authError?.message || "No user found");
+      return new Response(JSON.stringify({ error: "Unauthorized - Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`User ${user.id} requesting analysis for application ${applicationId}`);
+
+    // Verify user has RLS access to this application
+    // This respects the RLS policies (user owns app OR has admin role)
+    const { data: accessCheck, error: accessError } = await userSupabase
+      .from('loan_applications')
+      .select('id')
+      .eq('id', applicationId)
+      .maybeSingle();
+
+    if (accessError) {
+      console.error("Access check error:", accessError.message);
+      return new Response(JSON.stringify({ error: "Authorization check failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!accessCheck) {
+      console.error(`User ${user.id} denied access to application ${applicationId}`);
+      return new Response(JSON.stringify({ error: "Forbidden - You don't have access to this application" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`User ${user.id} authorized to analyze application ${applicationId}`);
+
+    // =============================================
+    // AUTHORIZED - Now fetch full data with service key
+    // =============================================
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch application data
@@ -111,6 +170,9 @@ Be concise and professional.`;
 
     const data = await response.json();
     const analysis = data.choices?.[0]?.message?.content || "Unable to generate analysis";
+
+    // Log successful analysis for audit
+    console.log(`Analysis completed for application ${applicationId} by user ${user.id}`);
 
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
