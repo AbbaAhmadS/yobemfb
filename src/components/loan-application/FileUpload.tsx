@@ -16,8 +16,8 @@ interface FileUploadProps {
   onChange: (path: string) => void; // Now stores path, not full URL
 }
 
-// Maximum file size: 1MB (1,048,576 bytes)
-const MAX_FILE_SIZE = 1048576;
+// Maximum file size: 500KB (512,000 bytes)
+const MAX_FILE_SIZE = 512000;
 
 // Accepted file types
 const ACCEPTED_TYPES = [
@@ -84,10 +84,10 @@ export function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size ONLY - 1MB max (1,048,576 bytes)
+    // Validate file size ONLY - 500KB max
     // NO dimension, width, height, aspect ratio, or resolution checks
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('File must be 1MB or smaller.');
+      toast.error('File must be 500KB or smaller.');
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -219,7 +219,7 @@ export function FileUpload({
               <Upload className="h-10 w-10 text-muted-foreground" />
             )}
             <p className="text-sm text-muted-foreground">
-              {isUploading ? 'Uploading...' : 'Click to upload (max 1MB)'}
+              {isUploading ? 'Uploading...' : 'Click to upload (max 500KB)'}
             </p>
             <p className="text-xs text-muted-foreground">
               JPG, PNG, WEBP, PDF

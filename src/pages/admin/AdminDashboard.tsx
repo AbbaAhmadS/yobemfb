@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
+import { MDAdminManagement } from '@/components/admin/MDAdminManagement';
 import { 
   LayoutDashboard, FileText, Users, LogOut, Moon, Sun,
   CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard, BarChart3
@@ -29,6 +31,8 @@ export default function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAdminManagement, setShowAdminManagement] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -148,6 +152,17 @@ export default function AdminDashboard() {
     );
   };
 
+  // Filter applications based on search query
+  const filteredApplications = useMemo(() => {
+    if (!searchQuery.trim()) return applications;
+    const query = searchQuery.toLowerCase();
+    return applications.filter(app => 
+      app.application_id.toLowerCase().includes(query) ||
+      app.full_name.toLowerCase().includes(query) ||
+      app.bank_account_number.toLowerCase().includes(query)
+    );
+  }, [applications, searchQuery]);
+
   if (!role) return null;
 
   return (
@@ -185,7 +200,11 @@ export default function AdminDashboard() {
             </Button>
           )}
           {role === 'managing_director' && (
-            <Button variant="ghost" className="w-full justify-start gap-2">
+            <Button 
+              variant={showAdminManagement ? 'secondary' : 'ghost'} 
+              className="w-full justify-start gap-2"
+              onClick={() => setShowAdminManagement(!showAdminManagement)}
+            >
               <Users className="h-4 w-4" />
               Admin Management
             </Button>
@@ -210,6 +229,21 @@ export default function AdminDashboard() {
           <h2 className="font-display text-3xl font-bold">Dashboard</h2>
           <p className="text-muted-foreground">Welcome to the admin portal</p>
         </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <AdminSearchBar 
+            onSearch={setSearchQuery}
+            placeholder="Search by Application ID, Name, or Account Number..."
+          />
+        </div>
+
+        {/* MD Admin Management Section */}
+        {role === 'managing_director' && showAdminManagement && (
+          <div className="mb-8">
+            <MDAdminManagement />
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -267,13 +301,13 @@ export default function AdminDashboard() {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
-            ) : applications.length === 0 ? (
+            ) : filteredApplications.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                No applications found.
+                {searchQuery ? 'No applications match your search.' : 'No applications found.'}
               </p>
             ) : (
               <div className="space-y-3">
-                {applications.slice(0, 10).map((app) => (
+                {filteredApplications.slice(0, 10).map((app) => (
                   <div
                     key={app.id}
                     className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
