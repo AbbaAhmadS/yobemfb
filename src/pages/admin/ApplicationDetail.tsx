@@ -473,6 +473,10 @@ export default function ApplicationDetail() {
                     <p className="font-medium">{guarantor.position}</p>
                   </div>
                   <div>
+                    <span className="text-muted-foreground">Employee ID:</span>
+                    <p className="font-medium">{guarantor.employee_id}</p>
+                  </div>
+                  <div>
                     <span className="text-muted-foreground">Monthly Salary:</span>
                     <p className="font-medium">{formatAmount(guarantor.salary)}</p>
                   </div>

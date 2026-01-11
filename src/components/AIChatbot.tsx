@@ -18,7 +18,7 @@ export function AIChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Hello! 👋 I\'m your Yobe Microfinance Bank loan assistant. I\'m available 24/7 to help you with:\n\n• Loan eligibility & requirements\n• Application process guidance\n• Interest rates & repayment terms\n• Account opening procedures\n\nHow can I assist you today?',
+      content: 'Hello! 👋 I\'m Ramatu, your Yobe Microfinance Bank loan assistant. I\'m available 24/7 to help you with:\n\n• Loan eligibility & requirements\n• Application process guidance\n• Interest rates & repayment terms\n• Account opening procedures\n\nHow can I assist you today?',
     },
   ]);
   const [input, setInput] = useState('');
@@ -202,7 +202,7 @@ export function AIChatbot() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b bg-primary text-primary-foreground rounded-t-lg">
             <CardTitle className="font-display text-lg flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              24/7 Loan Assistant
+              Ramatu - Loan Assistant
             </CardTitle>
             <Button
               variant="ghost"
