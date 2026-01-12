@@ -26,8 +26,8 @@ serve(async (req) => {
     // AUTHORIZATION CHECK - Verify caller has access
     // =============================================
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      console.error("No authorization header provided");
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error("No authorization header provided or invalid format");
       return new Response(JSON.stringify({ error: "Unauthorized - No auth token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -39,17 +39,20 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
-    if (authError || !user) {
-      console.error("Auth error:", authError?.message || "No user found");
+    // Get the authenticated user using getClaims for proper JWT validation
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Claims error:", claimsError?.message || "No claims found");
       return new Response(JSON.stringify({ error: "Unauthorized - Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(`User ${user.id} requesting analysis for application ${applicationId}`);
+    const userId = claimsData.claims.sub;
+    console.log(`User ${userId} requesting analysis for application ${applicationId}`);
 
     // Verify user has RLS access to this application
     // This respects the RLS policies (user owns app OR has admin role)
@@ -68,14 +71,14 @@ serve(async (req) => {
     }
 
     if (!accessCheck) {
-      console.error(`User ${user.id} denied access to application ${applicationId}`);
+      console.error(`User ${userId} denied access to application ${applicationId}`);
       return new Response(JSON.stringify({ error: "Forbidden - You don't have access to this application" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(`User ${user.id} authorized to analyze application ${applicationId}`);
+    console.log(`User ${userId} authorized to analyze application ${applicationId}`);
 
     // =============================================
     // AUTHORIZED - Now fetch full data with service key
@@ -172,7 +175,7 @@ Be concise and professional.`;
     const analysis = data.choices?.[0]?.message?.content || "Unable to generate analysis";
 
     // Log successful analysis for audit
-    console.log(`Analysis completed for application ${applicationId} by user ${user.id}`);
+    console.log(`Analysis completed for application ${applicationId} by user ${userId}`);
 
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

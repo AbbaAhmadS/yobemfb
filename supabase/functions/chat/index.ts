@@ -25,7 +25,7 @@ serve(async (req) => {
     // AUTHENTICATION CHECK
     // =============================================
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error("No authorization header provided for chat request");
       return new Response(JSON.stringify({ error: "Unauthorized - Please log in to use the chat" }), {
         status: 401,
@@ -33,21 +33,24 @@ serve(async (req) => {
       });
     }
 
-    // Validate the user token
+    // Validate the user token using getClaims
     const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
-    if (authError || !user) {
-      console.error("Chat auth error:", authError?.message || "No user found");
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Chat auth error:", claimsError?.message || "No claims found");
       return new Response(JSON.stringify({ error: "Unauthorized - Invalid session" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(`Chat request from authenticated user: ${user.id}`);
+    const userId = claimsData.claims.sub;
+    console.log(`Chat request from authenticated user: ${userId}`);
 
     // =============================================
     // RATE LIMITING (simple per-user check)
@@ -55,7 +58,7 @@ serve(async (req) => {
     // Note: For production, consider using Redis or a dedicated rate limiting service
     // This is a basic implementation that logs usage for monitoring
     
-    const systemPrompt = `You are a helpful loan advisor for Yobe Microfinance Bank. You assist customers with:
+    const systemPrompt = `You are Ramatu, a helpful and friendly loan advisor for Yobe Microfinance Bank. You assist customers with:
 - Information about loan products (short-term and long-term loans)
 - Loan eligibility requirements
 - Application process and required documents
@@ -91,7 +94,7 @@ Be professional, friendly, and provide accurate information. If you're unsure ab
 
     if (!response.ok) {
       if (response.status === 429) {
-        console.warn(`Rate limit hit for user ${user.id}`);
+        console.warn(`Rate limit hit for user ${userId}`);
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -111,7 +114,7 @@ Be professional, friendly, and provide accurate information. If you're unsure ab
       });
     }
 
-    console.log(`Chat response streaming for user ${user.id}`);
+    console.log(`Chat response streaming for user ${userId}`);
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
