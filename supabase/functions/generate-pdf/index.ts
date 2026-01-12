@@ -360,7 +360,7 @@ serve(async (req) => {
     
     // 1. Verify authentication
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error('PDF generation request missing authorization header');
       return new Response(
         JSON.stringify({ error: 'Unauthorized - missing authorization header' }),
@@ -373,16 +373,19 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
     
-    // 3. Verify user authentication
-    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
-    if (authError || !user) {
-      console.error('PDF generation auth failed:', authError?.message);
+    // 3. Verify user authentication using getClaims
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error('PDF generation auth failed:', claimsError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized - invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const userId = claimsData.claims.sub;
     const { applicationId } = await req.json();
 
     if (!applicationId) {
@@ -400,14 +403,14 @@ serve(async (req) => {
       .maybeSingle();
     
     if (accessError || !accessCheck) {
-      console.error(`PDF generation access denied for user ${user.id} to application ${applicationId}`);
+      console.error(`PDF generation access denied for user ${userId} to application ${applicationId}`);
       return new Response(
         JSON.stringify({ error: 'Forbidden - you do not have access to this application' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Generating PDF for application ${applicationId} by user ${user.id}`);
+    console.log(`Generating PDF for application ${applicationId} by user ${userId}`);
 
     // 5. Now safe to use service key for full data fetch
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
