@@ -182,7 +182,7 @@ export default function AdminDashboard() {
           <Button 
             variant="ghost" 
             className="w-full justify-start gap-2"
-            onClick={() => navigate('/admin/analytics')}
+            onClick={() => navigate(role === 'operations' ? '/admin/operations-analytics' : '/admin/analytics')}
           >
             <BarChart3 className="h-4 w-4" />
             Analytics

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -28,6 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
 import { toast } from 'sonner';
+import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 
 const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; className: string }> = {
   pending: { icon: Clock, className: 'status-pending' },
@@ -40,6 +41,7 @@ const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; classNa
 export default function CreditAdminDashboard() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,9 +122,23 @@ export default function CreditAdminDashboard() {
     );
   };
 
+  // Filter applications based on search and status
+  const filteredApplications = useMemo(() => {
+    let filtered = applications;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(app => 
+        app.application_id.toLowerCase().includes(query) ||
+        app.full_name.toLowerCase().includes(query) ||
+        app.bank_account_number.toLowerCase().includes(query)
+      );
+    }
+    return filtered;
+  }, [applications, searchQuery]);
+
   const filterApplications = (status?: ApplicationStatus) => {
-    if (!status) return applications;
-    return applications.filter((app) => app.status === status);
+    if (!status) return filteredApplications;
+    return filteredApplications.filter((app) => app.status === status);
   };
 
   return (
@@ -160,6 +176,14 @@ export default function CreditAdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Search Bar */}
+        <div className="mb-6">
+          <AdminSearchBar 
+            onSearch={setSearchQuery}
+            placeholder="Search by Application ID, Name, or Account Number..."
+          />
+        </div>
+
         {/* Stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>

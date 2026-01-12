@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple PDF generation using raw PDF format
-function generatePDF(application: any, guarantors: any[]): Uint8Array {
+// Generate HTML content that can be printed as PDF
+function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase64: string | null): string {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-NG', {
       year: 'numeric',
@@ -33,112 +33,318 @@ function generatePDF(application: any, guarantors: any[]): Uint8Array {
     return ranges[range] || range;
   };
 
-  // Build text content for the PDF
-  let content = `
-YOBE MICROFINANCE BANK LIMITED
-LOAN APPLICATION FORM
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      'pending': '#f59e0b',
+      'under_review': '#3b82f6',
+      'approved': '#10b981',
+      'declined': '#ef4444',
+      'flagged': '#f97316'
+    };
+    return colors[status] || '#6b7280';
+  };
 
-================================================================================
-APPLICATION DETAILS
-================================================================================
-
-Application ID: ${application.application_id}
-Application Date: ${formatDate(application.created_at)}
-Status: ${application.status?.toUpperCase() || 'PENDING'}
-Application Type: ${application.application_type?.toUpperCase() || 'N/A'}
-Product Type: ${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}
-
-================================================================================
-APPLICANT INFORMATION
-================================================================================
-
-Full Name: ${application.full_name}
-Phone Number: ${application.phone_number}
-Address: ${application.address}
-Employee ID: ${application.employee_id}
-Ministry/Department: ${application.ministry_department}
-BVN: ${application.bvn}
-NIN: ${application.nin}
-
-================================================================================
-LOAN DETAILS
-================================================================================
-
-Loan Amount Range: ${getLoanRange(application.loan_amount_range)}
-Specific Amount Requested: ${formatCurrency(application.specific_amount)}
-Repayment Period: ${application.repayment_period_months} months
-
-================================================================================
-BANK DETAILS
-================================================================================
-
-Bank Name: ${application.bank_name}
-Account Number: ${application.bank_account_number}
-
-================================================================================
-GUARANTORS
-================================================================================
-`;
-
+  let guarantorHTML = '';
   if (guarantors && guarantors.length > 0) {
     guarantors.forEach((g, index) => {
-      content += `
-GUARANTOR ${index + 1}
---------------------------------------------------------------------------------
-Full Name: ${g.full_name}
-Phone Number: ${g.phone_number}
-Address: ${g.address}
-Organization: ${g.organization}
-Position: ${g.position}
-Employee ID: ${g.employee_id}
-BVN: ${g.bvn}
-Monthly Salary: ${formatCurrency(g.salary)}
-Allowances: ${formatCurrency(g.allowances || 0)}
-Other Income: ${formatCurrency(g.other_income || 0)}
-Acknowledged: ${g.acknowledged ? 'Yes' : 'No'}
-`;
+      guarantorHTML += `
+        <div class="section">
+          <h3>Guarantor ${index + 1}</h3>
+          <table>
+            <tr><td class="label">Full Name:</td><td>${g.full_name}</td></tr>
+            <tr><td class="label">Phone Number:</td><td>${g.phone_number}</td></tr>
+            <tr><td class="label">Address:</td><td>${g.address}</td></tr>
+            <tr><td class="label">Organization:</td><td>${g.organization}</td></tr>
+            <tr><td class="label">Position:</td><td>${g.position}</td></tr>
+            <tr><td class="label">Employee ID:</td><td>${g.employee_id}</td></tr>
+            <tr><td class="label">BVN:</td><td>${g.bvn}</td></tr>
+            <tr><td class="label">Monthly Salary:</td><td>${formatCurrency(g.salary)}</td></tr>
+            <tr><td class="label">Allowances:</td><td>${formatCurrency(g.allowances || 0)}</td></tr>
+            <tr><td class="label">Other Income:</td><td>${formatCurrency(g.other_income || 0)}</td></tr>
+            <tr><td class="label">Acknowledged:</td><td>${g.acknowledged ? '✓ Yes' : '✗ No'}</td></tr>
+          </table>
+        </div>
+      `;
     });
   } else {
-    content += '\nNo guarantors on file.\n';
+    guarantorHTML = '<p class="no-data">No guarantors on file.</p>';
   }
 
-  content += `
-================================================================================
-APPROVAL STATUS
-================================================================================
+  const passportSection = passportPhotoBase64 
+    ? `<img src="${passportPhotoBase64}" alt="Passport Photo" class="passport-photo" />`
+    : '<div class="passport-placeholder">No Photo</div>';
 
-Credit Approval: ${application.credit_approval ? 'APPROVED' : application.credit_approval === false ? 'DECLINED' : 'PENDING'}
-${application.credit_approved_at ? `Credit Approved At: ${formatDate(application.credit_approved_at)}` : ''}
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Application - ${application.application_id}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: white;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #1e40af;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      color: #1e40af;
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    .header h2 {
+      font-size: 16px;
+      color: #4b5563;
+      font-weight: normal;
+    }
+    .applicant-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+    .applicant-info {
+      flex: 1;
+    }
+    .applicant-info h3 {
+      font-size: 18px;
+      color: #1e40af;
+      margin-bottom: 10px;
+    }
+    .passport-photo {
+      width: 120px;
+      height: 150px;
+      object-fit: cover;
+      border: 2px solid #1e40af;
+      border-radius: 8px;
+    }
+    .passport-placeholder {
+      width: 120px;
+      height: 150px;
+      background: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      border: 2px dashed #9ca3af;
+      border-radius: 8px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: white;
+      font-weight: bold;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .section {
+      margin-bottom: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .section h3 {
+      background: #1e40af;
+      color: white;
+      padding: 10px 15px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table td {
+      padding: 8px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    table tr:last-child td {
+      border-bottom: none;
+    }
+    .label {
+      font-weight: 600;
+      color: #4b5563;
+      width: 200px;
+      background: #f9fafb;
+    }
+    .approval-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 15px;
+    }
+    .approval-item {
+      text-align: center;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+    .approval-item.approved {
+      background: #ecfdf5;
+      border-color: #10b981;
+    }
+    .approval-item.declined {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+    .approval-item.pending {
+      background: #fffbeb;
+      border-color: #f59e0b;
+    }
+    .approval-label {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+    .approval-status {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    .no-data {
+      padding: 15px;
+      color: #6b7280;
+      font-style: italic;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 10px;
+    }
+    @media print {
+      body { padding: 0; }
+      .container { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>YOBE MICROFINANCE BANK LIMITED</h1>
+      <h2>LOAN APPLICATION FORM</h2>
+    </div>
 
-Audit Approval: ${application.audit_approval ? 'APPROVED' : application.audit_approval === false ? 'DECLINED' : 'PENDING'}
-${application.audit_approved_at ? `Audit Approved At: ${formatDate(application.audit_approved_at)}` : ''}
+    <div class="applicant-header">
+      <div class="applicant-info">
+        <h3>${application.full_name}</h3>
+        <p><strong>Application ID:</strong> ${application.application_id}</p>
+        <p><strong>Application Date:</strong> ${formatDate(application.created_at)}</p>
+        <p><strong>Status:</strong> <span class="status-badge" style="background: ${getStatusColor(application.status)}">${(application.status || 'pending').toUpperCase()}</span></p>
+      </div>
+      ${passportSection}
+    </div>
 
-COO Approval: ${application.coo_approval ? 'APPROVED' : application.coo_approval === false ? 'DECLINED' : 'PENDING'}
-${application.coo_approved_at ? `COO Approved At: ${formatDate(application.coo_approved_at)}` : ''}
+    <div class="section">
+      <h3>Application Details</h3>
+      <table>
+        <tr><td class="label">Application Type:</td><td>${(application.application_type || 'N/A').toUpperCase()}</td></tr>
+        <tr><td class="label">Product Type:</td><td>${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}</td></tr>
+      </table>
+    </div>
 
-================================================================================
-TERMS AND CONDITIONS
-================================================================================
+    <div class="section">
+      <h3>Applicant Information</h3>
+      <table>
+        <tr><td class="label">Full Name:</td><td>${application.full_name}</td></tr>
+        <tr><td class="label">Phone Number:</td><td>${application.phone_number}</td></tr>
+        <tr><td class="label">Address:</td><td>${application.address}</td></tr>
+        <tr><td class="label">Employee ID:</td><td>${application.employee_id}</td></tr>
+        <tr><td class="label">Ministry/Department:</td><td>${application.ministry_department}</td></tr>
+        <tr><td class="label">BVN:</td><td>${application.bvn}</td></tr>
+        <tr><td class="label">NIN:</td><td>${application.nin}</td></tr>
+      </table>
+    </div>
 
-Terms Accepted: ${application.terms_accepted ? 'Yes' : 'No'}
+    <div class="section">
+      <h3>Loan Details</h3>
+      <table>
+        <tr><td class="label">Loan Amount Range:</td><td>${getLoanRange(application.loan_amount_range)}</td></tr>
+        <tr><td class="label">Specific Amount:</td><td>${formatCurrency(application.specific_amount)}</td></tr>
+        <tr><td class="label">Repayment Period:</td><td>${application.repayment_period_months} months</td></tr>
+      </table>
+    </div>
 
-${application.notes ? `
-================================================================================
-NOTES
-================================================================================
+    <div class="section">
+      <h3>Bank Details</h3>
+      <table>
+        <tr><td class="label">Bank Name:</td><td>${application.bank_name}</td></tr>
+        <tr><td class="label">Account Number:</td><td>${application.bank_account_number}</td></tr>
+      </table>
+    </div>
 
-${application.notes}
-` : ''}
+    <div class="section">
+      <h3>Guarantors</h3>
+      ${guarantorHTML}
+    </div>
 
-================================================================================
-Document Generated: ${formatDate(new Date().toISOString())}
-Yobe Microfinance Bank Limited - All Rights Reserved
-================================================================================
-`;
+    <div class="section">
+      <h3>Approval Status</h3>
+      <div class="approval-grid">
+        <div class="approval-item ${application.credit_approval ? 'approved' : application.credit_approval === false ? 'declined' : 'pending'}">
+          <div class="approval-label">Credit</div>
+          <div class="approval-status">${application.credit_approval ? '✓ Approved' : application.credit_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
+          ${application.credit_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.credit_approved_at)}</div>` : ''}
+        </div>
+        <div class="approval-item ${application.audit_approval ? 'approved' : application.audit_approval === false ? 'declined' : 'pending'}">
+          <div class="approval-label">Audit</div>
+          <div class="approval-status">${application.audit_approval ? '✓ Approved' : application.audit_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
+          ${application.audit_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.audit_approved_at)}</div>` : ''}
+        </div>
+        <div class="approval-item ${application.coo_approval ? 'approved' : application.coo_approval === false ? 'declined' : 'pending'}">
+          <div class="approval-label">COO</div>
+          <div class="approval-status">${application.coo_approval ? '✓ Approved' : application.coo_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
+          ${application.coo_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.coo_approved_at)}</div>` : ''}
+        </div>
+      </div>
+    </div>
 
-  // Encode content as UTF-8
-  const encoder = new TextEncoder();
-  return encoder.encode(content);
+    <div class="section">
+      <h3>Terms and Conditions</h3>
+      <table>
+        <tr><td class="label">Terms Accepted:</td><td>${application.terms_accepted ? '✓ Yes' : '✗ No'}</td></tr>
+      </table>
+    </div>
+
+    ${application.notes ? `
+    <div class="section">
+      <h3>Notes</h3>
+      <p style="padding: 15px;">${application.notes}</p>
+    </div>
+    ` : ''}
+
+    <div class="footer">
+      <p>Document Generated: ${formatDate(new Date().toISOString())}</p>
+      <p>Yobe Microfinance Bank Limited - All Rights Reserved</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
 }
 
 serve(async (req) => {
@@ -231,16 +437,40 @@ serve(async (req) => {
       console.error('Error fetching guarantors:', guarError);
     }
 
-    // Generate PDF content
-    const pdfContent = generatePDF(application, guarantors || []);
+    // Fetch passport photo and convert to base64
+    let passportPhotoBase64: string | null = null;
+    if (application.passport_photo_url) {
+      try {
+        const { data: photoData, error: photoError } = await supabase
+          .storage
+          .from('passport-photos')
+          .download(application.passport_photo_url);
 
-    // Return as downloadable text file (formatted as document)
-    const textContent = new TextDecoder().decode(pdfContent);
-    return new Response(textContent, {
+        if (!photoError && photoData) {
+          const arrayBuffer = await photoData.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64 = btoa(binary);
+          const mimeType = photoData.type || 'image/jpeg';
+          passportPhotoBase64 = `data:${mimeType};base64,${base64}`;
+        }
+      } catch (photoErr) {
+        console.error('Error fetching passport photo:', photoErr);
+      }
+    }
+
+    // Generate HTML content
+    const htmlContent = generatePDFHTML(application, guarantors || [], passportPhotoBase64);
+
+    // Return as HTML file that can be saved/printed as PDF
+    return new Response(htmlContent, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Content-Disposition': `attachment; filename="loan-application-${application.application_id}.txt"`,
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': `attachment; filename="loan-application-${application.application_id}.html"`,
       },
     });
 

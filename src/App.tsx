@@ -24,6 +24,7 @@ import CreditAdminDashboard from "./pages/admin/CreditAdminDashboard";
 import CreateApplication from "./pages/admin/CreateApplication";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+import OperationsAnalyticsDashboard from "./pages/admin/OperationsAnalyticsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,11 @@ const App = () => (
             <Route path="/admin/analytics" element={
               <ProtectedRoute requireAdmin>
                 <AnalyticsDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/operations-analytics" element={
+              <ProtectedRoute requireAdmin allowedRoles={['operations']}>
+                <OperationsAnalyticsDashboard />
               </ProtectedRoute>
             } />
             <Route path="/admin/create-application" element={
