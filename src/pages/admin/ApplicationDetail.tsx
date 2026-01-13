@@ -24,7 +24,9 @@ import {
   AlertTriangle,
   Download,
   Brain,
-  Loader2
+  Loader2,
+  Building2,
+  Eye,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,6 +50,12 @@ const statusConfig: Record<ApplicationStatus, { className: string; icon: React.E
   flagged: { className: 'status-flagged', icon: AlertTriangle },
 };
 
+const ACCOUNT_TYPE_MAP: Record<string, string> = {
+  savings: 'Savings Account',
+  current: 'Current Account',
+  corporate: 'Corporate Account',
+};
+
 export default function ApplicationDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -63,6 +71,8 @@ export default function ApplicationDetail() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string>('');
+  const [showDocumentDialog, setShowDocumentDialog] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{ path: string; label: string } | null>(null);
 
   useEffect(() => {
     if (user && id) {
@@ -125,18 +135,19 @@ export default function ApplicationDetail() {
 
       if (error) throw error;
 
-      // Create blob and download
-      const blob = new Blob([data], { type: 'text/plain' });
+      // The response is HTML, create a proper PDF download
+      const blob = new Blob([data], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${application.application_id}-application.txt`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
       
-      toast.success('PDF downloaded successfully');
+      // Open in new window for printing as PDF
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+      
+      toast.success('PDF opened - use Print to save as PDF');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download PDF');
@@ -157,13 +168,17 @@ export default function ApplicationDetail() {
         body: { applicationId: application.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Analysis error response:', error);
+        throw error;
+      }
       
-      setAnalysisResult(data.analysis);
-    } catch (error) {
+      setAnalysisResult(data.analysis || 'No analysis generated');
+    } catch (error: any) {
       console.error('Analysis error:', error);
-      toast.error('Failed to analyze application');
-      setAnalysisResult('Failed to generate analysis. Please try again.');
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Failed to analyze application: ${errorMessage}`);
+      setAnalysisResult(`Failed to generate analysis: ${errorMessage}. Please try again.`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -367,7 +382,42 @@ export default function ApplicationDetail() {
       <main className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Applicant Info */}
+            {/* Application Type & Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  Application Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Application Type:</span>
+                  <p className="font-medium">
+                    <Badge variant={application.application_type === 'internal' ? 'default' : 'secondary'}>
+                      {application.application_type.toUpperCase()}
+                    </Badge>
+                    {application.application_type === 'internal' && (
+                      <span className="ml-2 text-xs text-muted-foreground">(Salary with YobeMFB)</span>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Created By:</span>
+                  <p className="font-medium">
+                    {application.created_by_admin ? (
+                      <Badge variant="outline" className="bg-primary/10">
+                        Credit Dept (On Behalf)
+                      </Badge>
+                    ) : (
+                      <span>Applicant</span>
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Applicant Info with Passport Photo */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -377,12 +427,18 @@ export default function ApplicationDetail() {
               </CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-4">
-                  <SignedImage
-                    storedPath={application.passport_photo_url}
-                    bucket="loan-uploads"
-                    alt="Passport"
-                    className="h-24 w-24 rounded-lg object-cover"
-                  />
+                  {application.passport_photo_url ? (
+                    <SignedImage
+                      storedPath={application.passport_photo_url}
+                      bucket="passport-photos"
+                      alt="Passport"
+                      className="h-28 w-28 rounded-lg object-cover border-2 border-primary shadow-md"
+                    />
+                  ) : (
+                    <div className="h-28 w-28 rounded-lg bg-muted flex items-center justify-center">
+                      <User className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                  )}
                   <div>
                     <p className="font-medium text-lg">{application.full_name}</p>
                     <p className="text-sm text-muted-foreground">{application.phone_number}</p>
@@ -436,11 +492,11 @@ export default function ApplicationDetail() {
                   <p className="font-medium">{application.repayment_period_months} Months</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Bank Name:</span>
-                  <p className="font-medium">{application.bank_name}</p>
+                  <span className="text-muted-foreground">YobeMFB Account Type:</span>
+                  <p className="font-medium">{ACCOUNT_TYPE_MAP[application.bank_name] || application.bank_name}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Account Number:</span>
+                  <span className="text-muted-foreground">YobeMFB Account Number:</span>
                   <p className="font-medium">{application.bank_account_number}</p>
                 </div>
               </CardContent>
@@ -481,8 +537,20 @@ export default function ApplicationDetail() {
                     <p className="font-medium">{formatAmount(guarantor.salary)}</p>
                   </div>
                   <div>
+                    <span className="text-muted-foreground">Allowances:</span>
+                    <p className="font-medium">{formatAmount(guarantor.allowances || 0)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Other Income:</span>
+                    <p className="font-medium">{formatAmount(guarantor.other_income || 0)}</p>
+                  </div>
+                  <div>
                     <span className="text-muted-foreground">BVN:</span>
                     <p className="font-medium">{guarantor.bvn}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Address:</span>
+                    <p className="font-medium">{guarantor.address}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -491,15 +559,24 @@ export default function ApplicationDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Documents */}
+            {/* Documents - Viewable by Credit */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5 text-primary" />
-                  Documents
+                  Uploaded Documents
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer" onClick={() => {
+                  setSelectedDocument({ path: application.passport_photo_url, label: 'Passport Photo' });
+                  setShowDocumentDialog(true);
+                }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Passport Photo</span>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
                 <SignedDocumentLink
                   storedPath={application.nin_document_url}
                   bucket="loan-uploads"
@@ -515,6 +592,13 @@ export default function ApplicationDetail() {
                   bucket="loan-uploads"
                   label="Signature"
                 />
+                {guarantor && (
+                  <SignedDocumentLink
+                    storedPath={guarantor.signature_url}
+                    bucket="signatures"
+                    label="Guarantor Signature"
+                  />
+                )}
               </CardContent>
             </Card>
 
@@ -640,6 +724,30 @@ export default function ApplicationDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAnalysisDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Viewer Dialog */}
+      <Dialog open={showDocumentDialog} onOpenChange={setShowDocumentDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedDocument?.label}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {selectedDocument && (
+              <SignedImage
+                storedPath={selectedDocument.path}
+                bucket="passport-photos"
+                alt={selectedDocument.label}
+                className="w-full max-h-[60vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDocumentDialog(false)}>
               Close
             </Button>
           </DialogFooter>

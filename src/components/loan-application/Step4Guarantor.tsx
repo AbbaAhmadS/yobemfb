@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -12,7 +11,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { FileUpload } from './FileUpload';
 import { GuarantorData } from '@/types/database';
@@ -31,7 +29,6 @@ const guarantorSchema = z.object({
   allowances: z.number().optional(),
   other_income: z.number().optional(),
   signature_url: z.string().min(1, 'Signature is required'),
-  acknowledged: z.boolean().refine(val => val === true, 'Guarantor must acknowledge'),
 });
 
 interface Step4Props {
@@ -55,13 +52,18 @@ export function Step4Guarantor({ initialData, onSubmit, onBack }: Step4Props) {
       allowances: initialData.allowances || 0,
       other_income: initialData.other_income || 0,
       signature_url: initialData.signature_url || '',
-      acknowledged: initialData.acknowledged || false,
+      acknowledged: true, // Always true now
     },
   });
 
+  const handleSubmit = (data: GuarantorData) => {
+    // Ensure acknowledged is always true
+    onSubmit({ ...data, acknowledged: true });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -186,9 +188,9 @@ export function Step4Guarantor({ initialData, onSubmit, onBack }: Step4Props) {
                   <FormControl>
                     <Input 
                       type="number"
-                      placeholder="Monthly salary"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      placeholder="e.g. 150000"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -205,8 +207,8 @@ export function Step4Guarantor({ initialData, onSubmit, onBack }: Step4Props) {
                   <FormControl>
                     <Input 
                       type="number"
-                      placeholder="Optional"
-                      {...field}
+                      placeholder="e.g. 50000"
+                      value={field.value || ''}
                       onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                     />
                   </FormControl>
@@ -224,8 +226,8 @@ export function Step4Guarantor({ initialData, onSubmit, onBack }: Step4Props) {
                   <FormControl>
                     <Input 
                       type="number"
-                      placeholder="Optional"
-                      {...field}
+                      placeholder="e.g. 20000"
+                      value={field.value || ''}
                       onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                     />
                   </FormControl>
@@ -250,31 +252,6 @@ export function Step4Guarantor({ initialData, onSubmit, onBack }: Step4Props) {
                 value={field.value}
                 onChange={field.onChange}
               />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="acknowledged"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  I confirm that I agree to act as guarantor for this loan application
-                </FormLabel>
-                <FormDescription>
-                  By checking this box, the guarantor acknowledges responsibility for 
-                  the loan in case of default by the applicant.
-                </FormDescription>
-              </div>
               <FormMessage />
             </FormItem>
           )}

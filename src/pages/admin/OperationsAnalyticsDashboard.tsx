@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   BarChart3,
   TrendingUp,
@@ -21,20 +22,47 @@ import {
   Building2,
   CreditCard,
   Wallet,
+  Eye,
+  FileText,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
+import { SignedImage } from '@/components/ui/signed-image';
+import { SignedDocumentLink } from '@/components/ui/signed-document-link';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AccountApplication {
   id: string;
   user_id: string;
   application_id: string;
   full_name: string;
+  phone_number: string;
+  address: string;
+  bvn: string;
+  nin: string;
   account_type: 'savings' | 'current' | 'corporate';
   status: 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged' | null;
   created_at: string;
   updated_at: string;
+  passport_photo_url: string;
+  nin_document_url: string;
+  signature_url: string;
+  referee1_name: string;
+  referee1_phone: string;
+  referee1_address: string;
+  referee2_name: string;
+  referee2_phone: string;
+  referee2_address: string;
+  notes: string | null;
 }
 
 interface OperationsAnalyticsData {
@@ -57,11 +85,22 @@ interface OperationsAnalyticsData {
   };
 }
 
+const statusConfig = {
+  pending: { label: 'Pending', icon: Clock, className: 'bg-warning/10 text-warning' },
+  under_review: { label: 'Under Review', icon: AlertTriangle, className: 'bg-primary/10 text-primary' },
+  approved: { label: 'Approved', icon: CheckCircle, className: 'bg-success/10 text-success' },
+  declined: { label: 'Declined', icon: XCircle, className: 'bg-destructive/10 text-destructive' },
+  flagged: { label: 'Flagged', icon: AlertTriangle, className: 'bg-orange-500/10 text-orange-500' },
+};
+
 export default function OperationsAnalyticsDashboard() {
   const navigate = useNavigate();
   const { isAdmin, roles } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<OperationsAnalyticsData | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedApplication, setSelectedApplication] = useState<AccountApplication | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -79,58 +118,96 @@ export default function OperationsAnalyticsDashboard() {
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-      // Only fetch account applications for operations
+      // Fetch account applications using the RPC function for operations
       const { data: accountData, error: accountError } = await supabase
-        .from('account_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_account_applications_for_operations');
 
-      if (accountError) throw accountError;
-
-      const accounts = (accountData || []) as AccountApplication[];
-
-      // Calculate account stats
-      const accountStats = {
-        total: accounts.length,
-        pending: accounts.filter(a => a.status === 'pending').length,
-        approved: accounts.filter(a => a.status === 'approved').length,
-        declined: accounts.filter(a => a.status === 'declined').length,
-        underReview: accounts.filter(a => a.status === 'under_review').length,
-        savingsAccounts: accounts.filter(a => a.account_type === 'savings').length,
-        currentAccounts: accounts.filter(a => a.account_type === 'current').length,
-        corporateAccounts: accounts.filter(a => a.account_type === 'corporate').length,
-      };
-
-      // Calculate trends
-      const accountsThisMonth = accounts.filter(a => new Date(a.created_at) >= startOfMonth).length;
-      const accountsLastMonth = accounts.filter(a => {
-        const date = new Date(a.created_at);
-        return date >= startOfLastMonth && date <= endOfLastMonth;
-      }).length;
-
-      const savingsThisMonth = accounts.filter(a => 
-        new Date(a.created_at) >= startOfMonth && a.account_type === 'savings'
-      ).length;
-
-      const currentThisMonth = accounts.filter(a => 
-        new Date(a.created_at) >= startOfMonth && a.account_type === 'current'
-      ).length;
-
-      setAnalytics({
-        accountApplications: accounts,
-        accountStats,
-        trends: {
-          accountsThisMonth,
-          accountsLastMonth,
-          savingsThisMonth,
-          currentThisMonth,
-        },
-      });
+      if (accountError) {
+        console.error('RPC error, falling back to direct query:', accountError);
+        // Fallback to direct query
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('account_applications')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (fallbackError) throw fallbackError;
+        processAccountData(fallbackData || [], startOfMonth, startOfLastMonth, endOfLastMonth);
+      } else {
+        processAccountData(accountData || [], startOfMonth, startOfLastMonth, endOfLastMonth);
+      }
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast.error('Failed to load analytics');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const processAccountData = (
+    accountData: any[], 
+    startOfMonth: Date, 
+    startOfLastMonth: Date, 
+    endOfLastMonth: Date
+  ) => {
+    const accounts = accountData as AccountApplication[];
+
+    // Calculate account stats
+    const accountStats = {
+      total: accounts.length,
+      pending: accounts.filter(a => a.status === 'pending').length,
+      approved: accounts.filter(a => a.status === 'approved').length,
+      declined: accounts.filter(a => a.status === 'declined').length,
+      underReview: accounts.filter(a => a.status === 'under_review').length,
+      savingsAccounts: accounts.filter(a => a.account_type === 'savings').length,
+      currentAccounts: accounts.filter(a => a.account_type === 'current').length,
+      corporateAccounts: accounts.filter(a => a.account_type === 'corporate').length,
+    };
+
+    // Calculate trends
+    const accountsThisMonth = accounts.filter(a => new Date(a.created_at) >= startOfMonth).length;
+    const accountsLastMonth = accounts.filter(a => {
+      const date = new Date(a.created_at);
+      return date >= startOfLastMonth && date <= endOfLastMonth;
+    }).length;
+
+    const savingsThisMonth = accounts.filter(a => 
+      new Date(a.created_at) >= startOfMonth && a.account_type === 'savings'
+    ).length;
+
+    const currentThisMonth = accounts.filter(a => 
+      new Date(a.created_at) >= startOfMonth && a.account_type === 'current'
+    ).length;
+
+    setAnalytics({
+      accountApplications: accounts,
+      accountStats,
+      trends: {
+        accountsThisMonth,
+        accountsLastMonth,
+        savingsThisMonth,
+        currentThisMonth,
+      },
+    });
+  };
+
+  const handleStatusUpdate = async (appId: string, newStatus: 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged') => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('account_applications')
+        .update({ status: newStatus })
+        .eq('id', appId);
+
+      if (error) throw error;
+
+      toast.success(`Application status updated to ${newStatus}`);
+      fetchAnalytics();
+      setSelectedApplication(null);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update application status');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -144,6 +221,25 @@ export default function OperationsAnalyticsDashboard() {
     if (current < previous) return <TrendingDown className="h-4 w-4 text-destructive" />;
     return null;
   };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-NG', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Filter applications based on search
+  const filteredApplications = analytics?.accountApplications.filter(app => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      app.application_id.toLowerCase().includes(query) ||
+      app.full_name.toLowerCase().includes(query) ||
+      app.phone_number.includes(query)
+    );
+  }) || [];
 
   if (isLoading) {
     return (
@@ -163,15 +259,15 @@ export default function OperationsAnalyticsDashboard() {
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
               <h1 className="font-display font-semibold text-lg flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-primary" />
-                Operations Analytics
+                Operations Dashboard
               </h1>
-              <p className="text-sm text-muted-foreground">Account opening insights</p>
+              <p className="text-sm text-muted-foreground">Account opening management</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchAnalytics}>
@@ -182,6 +278,14 @@ export default function OperationsAnalyticsDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Search Bar */}
+        <div className="mb-6">
+          <AdminSearchBar 
+            onSearch={setSearchQuery}
+            placeholder="Search by Application ID, Name, or Phone..."
+          />
+        </div>
+
         {/* Overview Stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -389,47 +493,173 @@ export default function OperationsAnalyticsDashboard() {
           </Card>
         </div>
 
-        {/* Recent Applications */}
+        {/* Account Applications List */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Recent Account Applications</CardTitle>
-            <CardDescription>Latest account opening requests</CardDescription>
+            <CardTitle className="font-display">Account Opening Applications</CardTitle>
+            <CardDescription>Click on an application to view details and uploaded documents</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analytics.accountApplications.slice(0, 10).map((app) => (
-                <div
-                  key={app.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-primary" />
+              {filteredApplications.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  {searchQuery ? 'No applications match your search.' : 'No account applications found.'}
+                </p>
+              ) : (
+                filteredApplications.map((app) => {
+                  const config = statusConfig[app.status || 'pending'];
+                  const StatusIcon = config.icon;
+                  return (
+                    <div
+                      key={app.id}
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedApplication(app)}
+                    >
+                      <div className="flex items-center gap-4">
+                        {app.passport_photo_url ? (
+                          <SignedImage 
+                            storedPath={app.passport_photo_url} 
+                            bucket="passport-photos"
+                            alt="Passport" 
+                            className="h-12 w-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Users className="h-6 w-6 text-primary" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium">{app.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {app.application_id} • {app.account_type.charAt(0).toUpperCase() + app.account_type.slice(1)} Account
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatDate(app.created_at)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={config.className}>
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {config.label}
+                        </Badge>
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{app.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {app.application_id} • {app.account_type.charAt(0).toUpperCase() + app.account_type.slice(1)} Account
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`text-sm px-2 py-1 rounded ${
-                    app.status === 'approved' ? 'bg-success/10 text-success' :
-                    app.status === 'declined' ? 'bg-destructive/10 text-destructive' :
-                    app.status === 'pending' ? 'bg-warning/10 text-warning' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {app.status?.replace('_', ' ').toUpperCase() || 'PENDING'}
-                  </span>
-                </div>
-              ))}
-              {analytics.accountApplications.length === 0 && (
-                <p className="text-muted-foreground text-center py-8">No account applications found</p>
+                  );
+                })
               )}
             </div>
           </CardContent>
         </Card>
       </main>
+
+      {/* Application Detail Dialog */}
+      <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              Account Application - {selectedApplication?.application_id}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedApplication?.account_type.charAt(0).toUpperCase()}{selectedApplication?.account_type.slice(1)} Account Application
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedApplication && (
+            <div className="space-y-6">
+              {/* Applicant Info with Photo */}
+              <div className="flex items-start gap-4 p-4 rounded-lg border bg-muted/30">
+                {selectedApplication.passport_photo_url ? (
+                  <SignedImage 
+                    storedPath={selectedApplication.passport_photo_url} 
+                    bucket="passport-photos"
+                    alt="Passport" 
+                    className="h-24 w-24 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center">
+                    <Users className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{selectedApplication.full_name}</h3>
+                  <p className="text-muted-foreground">{selectedApplication.phone_number}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedApplication.address}</p>
+                  <div className="flex gap-4 mt-2 text-sm">
+                    <span><strong>BVN:</strong> {selectedApplication.bvn}</span>
+                    <span><strong>NIN:</strong> {selectedApplication.nin}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Uploaded Documents */}
+              <div>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Uploaded Documents
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <SignedDocumentLink
+                    storedPath={selectedApplication.nin_document_url}
+                    bucket="passport-photos"
+                    label="NIN Document"
+                  />
+                  <SignedDocumentLink
+                    storedPath={selectedApplication.signature_url}
+                    bucket="passport-photos"
+                    label="Signature"
+                  />
+                </div>
+              </div>
+
+              {/* Referees */}
+              <div>
+                <h4 className="font-medium mb-3">Referees</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="p-3 rounded-lg border">
+                    <p className="font-medium">Referee 1</p>
+                    <p className="text-sm">{selectedApplication.referee1_name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedApplication.referee1_phone}</p>
+                    <p className="text-xs text-muted-foreground">{selectedApplication.referee1_address}</p>
+                  </div>
+                  <div className="p-3 rounded-lg border">
+                    <p className="font-medium">Referee 2</p>
+                    <p className="text-sm">{selectedApplication.referee2_name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedApplication.referee2_phone}</p>
+                    <p className="text-xs text-muted-foreground">{selectedApplication.referee2_address}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleStatusUpdate(selectedApplication.id, 'under_review')}
+                  disabled={isUpdating || selectedApplication.status === 'under_review'}
+                >
+                  Mark Under Review
+                </Button>
+                <Button 
+                  onClick={() => handleStatusUpdate(selectedApplication.id, 'approved')}
+                  disabled={isUpdating || selectedApplication.status === 'approved'}
+                  className="bg-success hover:bg-success/90"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => handleStatusUpdate(selectedApplication.id, 'declined')}
+                  disabled={isUpdating || selectedApplication.status === 'declined'}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Decline
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -39,19 +39,18 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Get the authenticated user using getClaims for proper JWT validation
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    // Get the authenticated user using getUser
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error("Claims error:", claimsError?.message || "No claims found");
+    if (userError || !user) {
+      console.error("Auth error:", userError?.message || "No user found");
       return new Response(JSON.stringify({ error: "Unauthorized - Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
     console.log(`User ${userId} requesting analysis for application ${applicationId}`);
 
     // Verify user has RLS access to this application
@@ -116,13 +115,14 @@ LOAN DETAILS:
 - Amount Requested: ₦${application.specific_amount.toLocaleString()}
 - Loan Range: ${application.loan_amount_range}
 - Repayment Period: ${application.repayment_period_months} months
-- Bank: ${application.bank_name}
+- YobeMFB Account Type: ${application.bank_name}
 
 GUARANTOR DETAILS:
 ${guarantor ? `
 - Name: ${guarantor.full_name}
 - Organization: ${guarantor.organization}
 - Position: ${guarantor.position}
+- Employee ID: ${guarantor.employee_id}
 - Monthly Salary: ₦${guarantor.salary.toLocaleString()}
 - Allowances: ₦${(guarantor.allowances || 0).toLocaleString()}
 - Other Income: ₦${(guarantor.other_income || 0).toLocaleString()}
