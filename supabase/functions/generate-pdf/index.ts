@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Generate HTML content that can be printed as PDF
-function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase64: string | null): string {
+// Generate HTML content for admin PDF with full details
+function generateAdminPDFHTML(application: any, guarantors: any[], passportPhotoBase64: string | null): string {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-NG', {
       year: 'numeric',
@@ -33,6 +33,15 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
     return ranges[range] || range;
   };
 
+  const getAccountType = (type: string) => {
+    const types: Record<string, string> = {
+      'savings': 'Savings Account',
+      'current': 'Current Account',
+      'corporate': 'Corporate Account'
+    };
+    return types[type] || type;
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'pending': '#f59e0b',
@@ -42,6 +51,17 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
       'flagged': '#f97316'
     };
     return colors[status] || '#6b7280';
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'pending': 'Pending',
+      'under_review': 'Under Review',
+      'approved': 'Approved',
+      'declined': 'Declined',
+      'flagged': 'Flagged'
+    };
+    return labels[status] || status;
   };
 
   let guarantorHTML = '';
@@ -61,7 +81,6 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
             <tr><td class="label">Monthly Salary:</td><td>${formatCurrency(g.salary)}</td></tr>
             <tr><td class="label">Allowances:</td><td>${formatCurrency(g.allowances || 0)}</td></tr>
             <tr><td class="label">Other Income:</td><td>${formatCurrency(g.other_income || 0)}</td></tr>
-            <tr><td class="label">Acknowledged:</td><td>${g.acknowledged ? '✓ Yes' : '✗ No'}</td></tr>
           </table>
         </div>
       `;
@@ -160,6 +179,16 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
       font-size: 11px;
       text-transform: uppercase;
     }
+    .app-type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .app-type-internal { background: #dbeafe; color: #1e40af; }
+    .app-type-external { background: #fef3c7; color: #92400e; }
     .section {
       margin-bottom: 20px;
       border: 1px solid #e5e7eb;
@@ -246,7 +275,7 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
   <div class="container">
     <div class="header">
       <h1>YOBE MICROFINANCE BANK LIMITED</h1>
-      <h2>LOAN APPLICATION FORM</h2>
+      <h2>LOAN APPLICATION FORM (ADMIN COPY)</h2>
     </div>
 
     <div class="applicant-header">
@@ -254,17 +283,16 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
         <h3>${application.full_name}</h3>
         <p><strong>Application ID:</strong> ${application.application_id}</p>
         <p><strong>Application Date:</strong> ${formatDate(application.created_at)}</p>
-        <p><strong>Status:</strong> <span class="status-badge" style="background: ${getStatusColor(application.status)}">${(application.status || 'pending').toUpperCase()}</span></p>
+        <p>
+          <strong>Type:</strong> 
+          <span class="app-type-badge ${application.application_type === 'internal' ? 'app-type-internal' : 'app-type-external'}">
+            ${(application.application_type || 'external').toUpperCase()}
+          </span>
+          ${application.created_by_admin ? '<span class="app-type-badge app-type-internal">CREDIT DEPT</span>' : ''}
+        </p>
+        <p><strong>Status:</strong> <span class="status-badge" style="background: ${getStatusColor(application.status)}">${getStatusLabel(application.status)}</span></p>
       </div>
       ${passportSection}
-    </div>
-
-    <div class="section">
-      <h3>Application Details</h3>
-      <table>
-        <tr><td class="label">Application Type:</td><td>${(application.application_type || 'N/A').toUpperCase()}</td></tr>
-        <tr><td class="label">Product Type:</td><td>${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}</td></tr>
-      </table>
     </div>
 
     <div class="section">
@@ -283,6 +311,7 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
     <div class="section">
       <h3>Loan Details</h3>
       <table>
+        <tr><td class="label">Product Type:</td><td>${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}</td></tr>
         <tr><td class="label">Loan Amount Range:</td><td>${getLoanRange(application.loan_amount_range)}</td></tr>
         <tr><td class="label">Specific Amount:</td><td>${formatCurrency(application.specific_amount)}</td></tr>
         <tr><td class="label">Repayment Period:</td><td>${application.repayment_period_months} months</td></tr>
@@ -290,9 +319,9 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
     </div>
 
     <div class="section">
-      <h3>Bank Details</h3>
+      <h3>Disbursement Account (YobeMFB)</h3>
       <table>
-        <tr><td class="label">Bank Name:</td><td>${application.bank_name}</td></tr>
+        <tr><td class="label">Account Type:</td><td>${getAccountType(application.bank_name)}</td></tr>
         <tr><td class="label">Account Number:</td><td>${application.bank_account_number}</td></tr>
       </table>
     </div>
@@ -303,7 +332,7 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
     </div>
 
     <div class="section">
-      <h3>Approval Status</h3>
+      <h3>Approval Chain</h3>
       <div class="approval-grid">
         <div class="approval-item ${application.credit_approval ? 'approved' : application.credit_approval === false ? 'declined' : 'pending'}">
           <div class="approval-label">Credit</div>
@@ -323,13 +352,6 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
       </div>
     </div>
 
-    <div class="section">
-      <h3>Terms and Conditions</h3>
-      <table>
-        <tr><td class="label">Terms Accepted:</td><td>${application.terms_accepted ? '✓ Yes' : '✗ No'}</td></tr>
-      </table>
-    </div>
-
     ${application.notes ? `
     <div class="section">
       <h3>Notes</h3>
@@ -340,6 +362,7 @@ function generatePDFHTML(application: any, guarantors: any[], passportPhotoBase6
     <div class="footer">
       <p>Document Generated: ${formatDate(new Date().toISOString())}</p>
       <p>Yobe Microfinance Bank Limited - All Rights Reserved</p>
+      <p>FOR INTERNAL USE ONLY</p>
     </div>
   </div>
 </body>
@@ -373,19 +396,18 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
     
-    // 3. Verify user authentication using getClaims
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    // 3. Get current user
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error('PDF generation auth failed:', claimsError?.message);
+    if (userError || !user) {
+      console.error('PDF generation auth failed:', userError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized - invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
     const { applicationId } = await req.json();
 
     if (!applicationId) {
@@ -466,14 +488,13 @@ serve(async (req) => {
     }
 
     // Generate HTML content
-    const htmlContent = generatePDFHTML(application, guarantors || [], passportPhotoBase64);
+    const htmlContent = generateAdminPDFHTML(application, guarantors || [], passportPhotoBase64);
 
-    // Return as HTML file that can be saved/printed as PDF
+    // Return as HTML with proper headers for PDF printing
     return new Response(htmlContent, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="loan-application-${application.application_id}.html"`,
       },
     });
 

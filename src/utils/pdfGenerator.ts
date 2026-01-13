@@ -19,12 +19,6 @@ interface ApplicationData {
   status: string;
   created_at: string;
   passport_photo_url?: string;
-  credit_approval?: boolean;
-  credit_approved_at?: string;
-  audit_approval?: boolean;
-  audit_approved_at?: string;
-  coo_approval?: boolean;
-  coo_approved_at?: string;
   notes?: string;
   terms_accepted?: boolean;
 }
@@ -40,7 +34,6 @@ interface GuarantorData {
   salary: number;
   allowances?: number;
   other_income?: number;
-  acknowledged?: boolean;
 }
 
 function formatDate(dateStr: string): string {
@@ -68,12 +61,43 @@ function getLoanRange(range: string): string {
   return ranges[range] || range;
 }
 
+function getAccountType(type: string): string {
+  const types: Record<string, string> = {
+    'savings': 'Savings Account',
+    'current': 'Current Account',
+    'corporate': 'Corporate Account'
+  };
+  return types[type] || type;
+}
+
+function getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    'pending': 'Pending',
+    'under_review': 'Under Review',
+    'approved': 'Approved',
+    'declined': 'Declined',
+    'flagged': 'Flagged'
+  };
+  return labels[status] || status;
+}
+
+function getStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    'pending': '#f59e0b',
+    'under_review': '#3b82f6',
+    'approved': '#10b981',
+    'declined': '#ef4444',
+    'flagged': '#f97316'
+  };
+  return colors[status] || '#6b7280';
+}
+
 export async function generateApplicationPDF(
   application: ApplicationData, 
   guarantors: GuarantorData[],
   passportDataUrl?: string
 ): Promise<Blob> {
-  // Create HTML content for PDF
+  // Create HTML content for PDF - User version without approval chain
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -87,7 +111,7 @@ export async function generateApplicationPDF(
     .header h1 { color: #1a5d2e; font-size: 24px; margin-bottom: 5px; }
     .header h2 { color: #333; font-size: 16px; font-weight: normal; }
     .passport-section { float: right; margin-left: 20px; }
-    .passport-photo { width: 120px; height: 150px; border: 1px solid #ccc; object-fit: cover; }
+    .passport-photo { width: 120px; height: 150px; border: 2px solid #1a5d2e; object-fit: cover; border-radius: 8px; }
     .section { margin-bottom: 25px; clear: both; }
     .section-title { background: #1a5d2e; color: white; padding: 8px 12px; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
     .row { display: flex; margin-bottom: 8px; }
@@ -96,14 +120,8 @@ export async function generateApplicationPDF(
     .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .guarantor { background: #f5f5f5; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
     .guarantor-title { font-weight: bold; margin-bottom: 10px; color: #1a5d2e; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; }
-    .status-pending { background: #ffc107; color: #000; }
-    .status-approved { background: #28a745; color: #fff; }
-    .status-declined { background: #dc3545; color: #fff; }
-    .status-under_review { background: #17a2b8; color: #fff; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: white; }
     .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 20px; }
-    .approval-section { margin-top: 20px; }
-    .approval-item { display: inline-block; margin-right: 30px; }
     @media print { body { padding: 20px; } }
   </style>
 </head>
@@ -119,7 +137,7 @@ export async function generateApplicationPDF(
     <div class="two-column">
       <div class="row"><span class="label">Application ID:</span><span class="value">${application.application_id}</span></div>
       <div class="row"><span class="label">Date:</span><span class="value">${formatDate(application.created_at)}</span></div>
-      <div class="row"><span class="label">Status:</span><span class="value"><span class="status-badge status-${application.status}">${application.status?.toUpperCase()}</span></span></div>
+      <div class="row"><span class="label">Approval Status:</span><span class="value"><span class="status-badge" style="background: ${getStatusColor(application.status)}">${getStatusLabel(application.status)}</span></span></div>
       <div class="row"><span class="label">Application Type:</span><span class="value">${application.application_type?.toUpperCase()}</span></div>
       <div class="row"><span class="label">Product Type:</span><span class="value">${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}</span></div>
     </div>
@@ -148,9 +166,9 @@ export async function generateApplicationPDF(
   </div>
 
   <div class="section">
-    <div class="section-title">BANK DETAILS</div>
+    <div class="section-title">DISBURSEMENT ACCOUNT (YobeMFB)</div>
     <div class="two-column">
-      <div class="row"><span class="label">Bank Name:</span><span class="value">${application.bank_name}</span></div>
+      <div class="row"><span class="label">Account Type:</span><span class="value">${getAccountType(application.bank_name)}</span></div>
       <div class="row"><span class="label">Account Number:</span><span class="value">${application.bank_account_number}</span></div>
     </div>
   </div>
@@ -172,35 +190,9 @@ export async function generateApplicationPDF(
           <div class="row"><span class="label">Other Income:</span><span class="value">${formatCurrency(g.other_income || 0)}</span></div>
         </div>
         <div class="row" style="margin-top: 10px;"><span class="label">Address:</span><span class="value">${g.address}</span></div>
-        <div class="row"><span class="label">Acknowledged:</span><span class="value">${g.acknowledged ? 'Yes' : 'No'}</span></div>
       </div>
     `).join('') : '<p>No guarantors on file.</p>'}
   </div>
-
-  <div class="section">
-    <div class="section-title">APPROVAL STATUS</div>
-    <div class="approval-section">
-      <div class="approval-item">
-        <strong>Credit:</strong> ${application.credit_approval ? '✅ APPROVED' : application.credit_approval === false ? '❌ DECLINED' : '⏳ PENDING'}
-        ${application.credit_approved_at ? `<br><small>${formatDate(application.credit_approved_at)}</small>` : ''}
-      </div>
-      <div class="approval-item">
-        <strong>Audit:</strong> ${application.audit_approval ? '✅ APPROVED' : application.audit_approval === false ? '❌ DECLINED' : '⏳ PENDING'}
-        ${application.audit_approved_at ? `<br><small>${formatDate(application.audit_approved_at)}</small>` : ''}
-      </div>
-      <div class="approval-item">
-        <strong>COO:</strong> ${application.coo_approval ? '✅ APPROVED' : application.coo_approval === false ? '❌ DECLINED' : '⏳ PENDING'}
-        ${application.coo_approved_at ? `<br><small>${formatDate(application.coo_approved_at)}</small>` : ''}
-      </div>
-    </div>
-  </div>
-
-  ${application.notes ? `
-  <div class="section">
-    <div class="section-title">NOTES</div>
-    <p>${application.notes}</p>
-  </div>
-  ` : ''}
 
   <div class="footer">
     <p>Document Generated: ${formatDate(new Date().toISOString())}</p>
@@ -218,7 +210,7 @@ export async function generateApplicationPDF(
 
 export async function downloadApplicationPDF(
   applicationId: string,
-  bucket: string = 'loan-uploads'
+  bucket: string = 'passport-photos'
 ): Promise<void> {
   try {
     // Fetch application data
@@ -264,25 +256,22 @@ export async function downloadApplicationPDF(
     // Generate PDF
     const pdfBlob = await generateApplicationPDF(application, guarantors || [], passportDataUrl);
 
-    // Create download link
+    // Create download link and open in new window
     const url = window.URL.createObjectURL(pdfBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `loan-application-${application.application_id}.html`;
-    document.body.appendChild(a);
-    a.click();
     
-    // Cleanup
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-
-    // Open print dialog for PDF printing
+    // Open in new window for printing
     const printWindow = window.open(url, '_blank');
     if (printWindow) {
       printWindow.onload = () => {
         printWindow.print();
       };
     }
+    
+    // Cleanup after a delay
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 5000);
+
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;

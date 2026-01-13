@@ -19,15 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LoanStep3Data, LoanAmountRange, LoanProductType, LOAN_AMOUNT_LABELS } from '@/types/database';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { LoanStep3Data, LoanAmountRange, LoanProductType, LOAN_AMOUNT_LABELS, AccountType } from '@/types/database';
+import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const step3Schema = z.object({
   product_type: z.enum(['short_term', 'long_term']),
   loan_amount_range: z.enum(['100k_300k', '300k_600k', '600k_1m', 'above_1m']),
   specific_amount: z.number().min(100000, 'Minimum amount is ₦100,000'),
-  repayment_period_months: z.number().min(1).max(24),
-  bank_name: z.string().min(2, 'Bank name is required'),
+  repayment_period_months: z.number().min(9).max(12),
+  bank_name: z.enum(['savings', 'current', 'corporate']), // Now account type
   bank_account_number: z.string().length(10, 'Account number must be 10 digits'),
 });
 
@@ -44,17 +45,11 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
       product_type: initialData.product_type || 'short_term',
       loan_amount_range: initialData.loan_amount_range || '100k_300k',
       specific_amount: initialData.specific_amount || 100000,
-      repayment_period_months: initialData.repayment_period_months || 6,
+      repayment_period_months: initialData.repayment_period_months || 9,
       bank_name: initialData.bank_name || '',
       bank_account_number: initialData.bank_account_number || '',
     },
   });
-
-  const productType = form.watch('product_type');
-
-  const getMaxRepaymentMonths = () => {
-    return productType === 'short_term' ? 12 : 24;
-  };
 
   return (
     <Form {...form}>
@@ -72,20 +67,10 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="short_term">
-                    Short Term Loan (Up to 12 months)
-                  </SelectItem>
-                  <SelectItem value="long_term">
-                    Long Term Loan (Up to 24 months)
-                  </SelectItem>
+                  <SelectItem value="short_term">Short Term Loan</SelectItem>
+                  <SelectItem value="long_term">Long Term Loan</SelectItem>
                 </SelectContent>
               </Select>
-              <FormDescription>
-                {productType === 'short_term' 
-                  ? 'Short term loans have a maximum repayment period of 12 months'
-                  : 'Long term loans can be repaid over up to 24 months'
-                }
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -153,11 +138,8 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Array.from({ length: getMaxRepaymentMonths() }, (_, i) => i + 1).map((month) => (
-                    <SelectItem key={month} value={String(month)}>
-                      {month} {month === 1 ? 'Month' : 'Months'}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="9">9 Months</SelectItem>
+                  <SelectItem value="12">12 Months</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -166,10 +148,14 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
         />
 
         <div className="border-t pt-6 mt-6">
-          <h3 className="font-medium mb-4">Disbursement Account</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Enter the bank account where you want the loan to be disbursed
-          </p>
+          <h3 className="font-medium mb-2">Disbursement Account</h3>
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Enter your YobeMFB bank account where you want the loan to be disbursed. 
+              The loan will only be disbursed into a YobeMFB bank account.
+            </AlertDescription>
+          </Alert>
 
           <div className="grid md:grid-cols-2 gap-6">
             <FormField
@@ -177,10 +163,20 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
               name="bank_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bank Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your bank name" {...field} />
-                  </FormControl>
+                  <FormLabel>YobeMFB Account Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="savings">Savings Account</SelectItem>
+                      <SelectItem value="current">Current Account</SelectItem>
+                      <SelectItem value="corporate">Corporate Account</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Your YobeMFB account type</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -191,7 +187,7 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
               name="bank_account_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Account Number</FormLabel>
+                  <FormLabel>YobeMFB Account Number</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Enter 10-digit account number" 
@@ -199,6 +195,7 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
                       {...field} 
                     />
                   </FormControl>
+                  <FormDescription>Your YobeMFB account number for disbursement</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

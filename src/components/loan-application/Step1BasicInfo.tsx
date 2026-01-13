@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -21,7 +22,8 @@ import {
 } from '@/components/ui/select';
 import { FileUpload } from './FileUpload';
 import { LoanStep1Data } from '@/types/database';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, User } from 'lucide-react';
+import { SignedImage } from '@/components/ui/signed-image';
 
 const step1Schema = z.object({
   full_name: z.string().min(3, 'Full name is required'),
@@ -52,9 +54,54 @@ export function Step1BasicInfo({ initialData, onSubmit }: Step1Props) {
     },
   });
 
+  const passportPhotoUrl = form.watch('passport_photo_url');
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Passport Photo First - Prominent Display */}
+        <div className="p-6 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+          <div className="flex items-start gap-6">
+            {/* Avatar Preview */}
+            <div className="flex-shrink-0">
+              {passportPhotoUrl ? (
+                <SignedImage 
+                  storedPath={passportPhotoUrl} 
+                  bucket="passport-photos"
+                  alt="Your passport photo" 
+                  className="h-32 w-32 rounded-xl object-cover border-4 border-primary shadow-lg"
+                />
+              ) : (
+                <div className="h-32 w-32 rounded-xl bg-muted flex items-center justify-center border-4 border-dashed border-muted-foreground/30">
+                  <User className="h-12 w-12 text-muted-foreground/50" />
+                </div>
+              )}
+            </div>
+            
+            {/* Upload Field */}
+            <div className="flex-1">
+              <FormField
+                control={form.control}
+                name="passport_photo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FileUpload
+                      bucket="passport-photos"
+                      folder="loan-applications"
+                      accept="image/*"
+                      label="Passport Photograph (Required)"
+                      description="Upload a recent passport photograph. This will serve as your avatar throughout the application process. Max 500KB."
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -149,25 +196,9 @@ export function Step1BasicInfo({ initialData, onSubmit }: Step1Props) {
                   <SelectItem value="external">External (Salary Account with other bank)</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="passport_photo_url"
-          render={({ field }) => (
-            <FormItem>
-              <FileUpload
-                bucket="passport-photos"
-                folder="loan-applications"
-                accept="image/*"
-                label="Passport Photograph"
-                description="Upload a recent passport photograph (max 1MB)"
-                value={field.value}
-                onChange={field.onChange}
-              />
+              <FormDescription>
+                Select 'Internal' if your salary is paid into a YobeMFB account
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

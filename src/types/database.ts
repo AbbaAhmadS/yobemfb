@@ -71,7 +71,7 @@ export interface LoanApplication {
   specific_amount: number;
   repayment_period_months: number;
   bank_account_number: string;
-  bank_name: string;
+  bank_name: string; // Now stores account type (savings/current/corporate)
   address: string;
   phone_number: string;
   signature_url: string;
@@ -148,7 +148,7 @@ export interface LoanStep3Data {
   loan_amount_range: LoanAmountRange;
   specific_amount: number;
   repayment_period_months: number;
-  bank_name: string;
+  bank_name: string; // Account type: savings/current/corporate
   bank_account_number: string;
 }
 
