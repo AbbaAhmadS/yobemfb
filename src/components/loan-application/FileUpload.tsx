@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, Image as ImageIcon, FileText } from 'lucide-react';
+import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,25 +13,23 @@ interface FileUploadProps {
   description?: string;
   value?: string;
   applicationId?: string;
-  onChange: (path: string) => void; // Now stores path, not full URL
+  onChange: (path: string) => void;
 }
 
 // Maximum file size: 500KB (512,000 bytes)
 const MAX_FILE_SIZE = 512000;
 
-// Accepted file types
+// Accepted file types - ONLY images (JPG, JPEG, PNG)
 const ACCEPTED_TYPES = [
   'image/jpeg',
   'image/jpg',
   'image/png',
-  'image/webp',
-  'application/pdf',
 ];
 
 export function FileUpload({
   bucket = 'loan-uploads',
   folder = 'uploads',
-  accept = 'image/jpeg,image/jpg,image/png,image/webp,application/pdf',
+  accept = 'image/jpeg,image/jpg,image/png',
   label,
   description,
   value,
@@ -84,8 +82,7 @@ export function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size ONLY - 500KB max
-    // NO dimension, width, height, aspect ratio, or resolution checks
+    // Validate file size - 500KB max
     if (file.size > MAX_FILE_SIZE) {
       toast.error('File must be 500KB or smaller.');
       if (inputRef.current) {
@@ -94,9 +91,9 @@ export function FileUpload({
       return;
     }
 
-    // Validate file type
+    // Validate file type - ONLY jpg, jpeg, png
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error('File type not supported. Please use JPG, PNG, WEBP, or PDF.');
+      toast.error('Only JPG and PNG images are allowed. Max 500KB.');
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -108,13 +105,12 @@ export function FileUpload({
     try {
       // Generate unique filename with organized folder structure
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      // Use organized folder structure: /uploads/loan-applications/{applicationId}/
       const basePath = applicationId
         ? `uploads/loan-applications/${applicationId}`
         : folder;
       const fileName = `${basePath}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // Upload to storage - NO transformation, compression, or resizing
+      // Upload to storage
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, {
@@ -162,9 +158,6 @@ export function FileUpload({
     }
   };
 
-  const isPDF = preview?.toLowerCase().endsWith('.pdf') || 
-                (preview && !preview.match(/\.(jpg|jpeg|png|webp|gif)$/i));
-
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">{label}</label>
@@ -183,18 +176,11 @@ export function FileUpload({
           >
             <X className="h-4 w-4" />
           </Button>
-          {!isPDF ? (
-            <img
-              src={preview}
-              alt="Preview"
-              className="max-h-48 rounded-lg mx-auto object-contain"
-            />
-          ) : (
-            <div className="flex items-center gap-3">
-              <FileText className="h-10 w-10 text-primary" />
-              <span className="text-sm truncate">Document uploaded</span>
-            </div>
-          )}
+          <img
+            src={preview}
+            alt="Preview"
+            className="max-h-48 rounded-lg mx-auto object-contain"
+          />
         </div>
       ) : (
         <div
@@ -213,16 +199,12 @@ export function FileUpload({
             className="hidden"
           />
           <div className="flex flex-col items-center gap-2">
-            {accept.includes('image') ? (
-              <ImageIcon className="h-10 w-10 text-muted-foreground" />
-            ) : (
-              <Upload className="h-10 w-10 text-muted-foreground" />
-            )}
+            <ImageIcon className="h-10 w-10 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               {isUploading ? 'Uploading...' : 'Click to upload (max 500KB)'}
             </p>
             <p className="text-xs text-muted-foreground">
-              JPG, PNG, WEBP, PDF
+              JPG, PNG only
             </p>
           </div>
         </div>

@@ -40,6 +40,14 @@ export interface AccountApplication {
   address: string;
   nin_document_url: string;
   signature_url: string;
+  // New fields
+  state?: string;
+  local_government?: string;
+  date_of_birth?: string;
+  next_of_kin_name?: string;
+  next_of_kin_address?: string;
+  next_of_kin_phone?: string;
+  // Legacy referee fields (for backward compatibility)
   referee1_name: string;
   referee1_phone: string;
   referee1_address: string;
@@ -164,26 +172,25 @@ export interface GuarantorData {
   allowances?: number;
   other_income?: number;
   signature_url: string;
-  acknowledged: boolean;
 }
 
-// Account opening form data
+// Account opening form data - Updated with new fields
 export interface AccountFormData {
   passport_photo_url: string;
-  account_type: AccountType;
   full_name: string;
-  nin: string;
-  bvn: string;
   phone_number: string;
+  state: string;
+  local_government: string;
   address: string;
+  date_of_birth: string;
+  bvn: string;
+  nin: string;
   nin_document_url: string;
+  next_of_kin_name: string;
+  next_of_kin_address: string;
+  next_of_kin_phone: string;
   signature_url: string;
-  referee1_name: string;
-  referee1_phone: string;
-  referee1_address: string;
-  referee2_name: string;
-  referee2_phone: string;
-  referee2_address: string;
+  account_type: AccountType;
 }
 
 export const LOAN_AMOUNT_LABELS: Record<LoanAmountRange, string> = {
@@ -205,7 +212,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   credit: 'Credit Department',
   audit: 'Internal Audit',
   coo: 'Chief Operations Officer',
-  operations: 'Operations Department',
+  operations: 'Account Opening Department',
   managing_director: 'Managing Director',
 };
 

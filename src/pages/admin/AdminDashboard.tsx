@@ -26,7 +26,7 @@ const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; classNa
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { user, signOut, roles } = useAuth();
+  const { user, signOut } = useAuth();
   const [role, setRole] = useState<AdminRole | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [applications, setApplications] = useState<LoanApplication[]>([]);
@@ -63,6 +63,12 @@ export default function AdminDashboard() {
           navigate('/admin/credit-dashboard');
           return;
         }
+        
+        // Redirect Account Opening Department to their dashboard
+        if (userRole === 'operations') {
+          navigate('/admin/operations-analytics');
+          return;
+        }
       } else {
         navigate('/admin/login');
       }
@@ -72,7 +78,7 @@ export default function AdminDashboard() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (role && role !== 'credit') {
+    if (role && role !== 'credit' && role !== 'operations') {
       fetchApplications();
     }
   }, [role]);
@@ -119,7 +125,7 @@ export default function AdminDashboard() {
       credit: 'Credit Department',
       audit: 'Internal Audit',
       coo: 'Chief Operations Officer',
-      operations: 'Operations Department',
+      operations: 'Account Opening Department',
       managing_director: 'Managing Director',
     };
     return labels[role];
@@ -182,23 +188,15 @@ export default function AdminDashboard() {
           <Button 
             variant="ghost" 
             className="w-full justify-start gap-2"
-            onClick={() => navigate(role === 'operations' ? '/admin/operations-analytics' : '/admin/analytics')}
+            onClick={() => navigate('/admin/analytics')}
           >
             <BarChart3 className="h-4 w-4" />
             Analytics
           </Button>
-          {role !== 'operations' && (
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <FileText className="h-4 w-4" />
-              Loan Applications
-            </Button>
-          )}
-          {role === 'operations' && (
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <Building2 className="h-4 w-4" />
-              Account Applications
-            </Button>
-          )}
+          <Button variant="ghost" className="w-full justify-start gap-2">
+            <FileText className="h-4 w-4" />
+            Loan Applications
+          </Button>
           {role === 'managing_director' && (
             <Button 
               variant={showAdminManagement ? 'secondary' : 'ghost'} 
