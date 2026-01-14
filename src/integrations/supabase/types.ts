@@ -557,17 +557,32 @@ export type Database = {
       get_account_applications_for_operations: {
         Args: never
         Returns: {
-          account_type: string
+          account_type: Database["public"]["Enums"]["account_type"]
           address: string
           application_id: string
           bvn: string
           created_at: string
+          date_of_birth: string
           full_name: string
           id: string
+          local_government: string
+          next_of_kin_address: string
+          next_of_kin_name: string
+          next_of_kin_phone: string
           nin: string
+          nin_document_url: string
           notes: string
+          passport_photo_url: string
           phone_number: string
-          status: string
+          referee1_address: string
+          referee1_name: string
+          referee1_phone: string
+          referee2_address: string
+          referee2_name: string
+          referee2_phone: string
+          signature_url: string
+          state: string
+          status: Database["public"]["Enums"]["application_status"]
           updated_at: string
           user_id: string
         }[]

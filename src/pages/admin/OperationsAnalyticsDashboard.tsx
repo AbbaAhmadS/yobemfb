@@ -25,6 +25,7 @@ import {
   Eye,
   FileText,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,6 +64,13 @@ interface AccountApplication {
   referee2_phone: string;
   referee2_address: string;
   notes: string | null;
+  // New fields
+  state?: string;
+  local_government?: string;
+  date_of_birth?: string;
+  next_of_kin_name?: string;
+  next_of_kin_address?: string;
+  next_of_kin_phone?: string;
 }
 
 interface OperationsAnalyticsData {
@@ -95,7 +103,7 @@ const statusConfig = {
 
 export default function OperationsAnalyticsDashboard() {
   const navigate = useNavigate();
-  const { isAdmin, roles } = useAuth();
+  const { isAdmin } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<OperationsAnalyticsData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +126,7 @@ export default function OperationsAnalyticsDashboard() {
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-      // Fetch account applications using the RPC function for operations
+      // Fetch account applications using the RPC function for Account Opening Department
       const { data: accountData, error: accountError } = await supabase
         .rpc('get_account_applications_for_operations');
 
@@ -265,9 +273,9 @@ export default function OperationsAnalyticsDashboard() {
             <div>
               <h1 className="font-display font-semibold text-lg flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-primary" />
-                Operations Dashboard
+                Account Opening Department Dashboard
               </h1>
-              <p className="text-sm text-muted-foreground">Account opening management</p>
+              <p className="text-sm text-muted-foreground">Account opening applications management</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchAnalytics}>
@@ -286,7 +294,7 @@ export default function OperationsAnalyticsDashboard() {
           />
         </div>
 
-        {/* Overview Stats */}
+        {/* Overview Stats - NO AMOUNTS, only account counts */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="p-6">
@@ -497,7 +505,7 @@ export default function OperationsAnalyticsDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="font-display">Account Opening Applications</CardTitle>
-            <CardDescription>Click on an application to view details and uploaded documents</CardDescription>
+            <CardDescription>Click on an application to view full details and uploaded documents</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -552,11 +560,12 @@ export default function OperationsAnalyticsDashboard() {
         </Card>
       </main>
 
-      {/* Application Detail Dialog */}
+      {/* Application Detail Dialog - Full Access for Account Opening Dept */}
       <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display">
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
               Account Application - {selectedApplication?.application_id}
             </DialogTitle>
             <DialogDescription>
@@ -566,66 +575,153 @@ export default function OperationsAnalyticsDashboard() {
           
           {selectedApplication && (
             <div className="space-y-6">
-              {/* Applicant Info with Photo */}
-              <div className="flex items-start gap-4 p-4 rounded-lg border bg-muted/30">
-                {selectedApplication.passport_photo_url ? (
-                  <SignedImage 
-                    storedPath={selectedApplication.passport_photo_url} 
-                    bucket="passport-photos"
-                    alt="Passport" 
-                    className="h-24 w-24 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center">
-                    <Users className="h-10 w-10 text-muted-foreground" />
+              {/* Applicant Info with Passport Photo */}
+              <div className="flex items-start gap-6 p-4 rounded-lg border bg-muted/30">
+                <div className="flex-shrink-0">
+                  {selectedApplication.passport_photo_url ? (
+                    <SignedImage 
+                      storedPath={selectedApplication.passport_photo_url} 
+                      bucket="passport-photos"
+                      alt="Passport" 
+                      className="h-32 w-32 rounded-lg object-cover border-2 border-primary shadow-md"
+                    />
+                  ) : (
+                    <div className="h-32 w-32 rounded-lg bg-muted flex items-center justify-center">
+                      <Users className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                  <p className="text-xs text-center text-muted-foreground mt-2">Passport Photo</p>
+                </div>
+                <div className="flex-1 grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Full Name</p>
+                    <p className="font-semibold text-lg">{selectedApplication.full_name}</p>
                   </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{selectedApplication.full_name}</h3>
-                  <p className="text-muted-foreground">{selectedApplication.phone_number}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedApplication.address}</p>
-                  <div className="flex gap-4 mt-2 text-sm">
-                    <span><strong>BVN:</strong> {selectedApplication.bvn}</span>
-                    <span><strong>NIN:</strong> {selectedApplication.nin}</span>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone Number</p>
+                    <p className="font-medium">{selectedApplication.phone_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Date of Birth</p>
+                    <p className="font-medium">{selectedApplication.date_of_birth ? formatDate(selectedApplication.date_of_birth) : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Account Type</p>
+                    <p className="font-medium">{selectedApplication.account_type.charAt(0).toUpperCase() + selectedApplication.account_type.slice(1)} Account</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">State</p>
+                    <p className="font-medium">{selectedApplication.state || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Local Government</p>
+                    <p className="font-medium">{selectedApplication.local_government || 'N/A'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Uploaded Documents */}
+              {/* Address */}
+              <div className="p-4 rounded-lg border">
+                <p className="text-xs text-muted-foreground mb-1">Residential Address</p>
+                <p className="font-medium">{selectedApplication.address}</p>
+              </div>
+
+              {/* Identification */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">BVN</p>
+                  <p className="font-mono font-medium text-lg">{selectedApplication.bvn}</p>
+                </div>
+                <div className="p-4 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">NIN</p>
+                  <p className="font-mono font-medium text-lg">{selectedApplication.nin}</p>
+                </div>
+              </div>
+
+              {/* Uploaded Documents - FULLY VISIBLE */}
               <div>
                 <h4 className="font-medium mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4 text-primary" />
                   Uploaded Documents
                 </h4>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="p-3 rounded-lg border text-center">
+                    <p className="text-xs text-muted-foreground mb-2">Passport Photo</p>
+                    {selectedApplication.passport_photo_url ? (
+                      <SignedImage 
+                        storedPath={selectedApplication.passport_photo_url} 
+                        bucket="passport-photos"
+                        alt="Passport" 
+                        className="w-full h-32 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="h-32 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">Not uploaded</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 rounded-lg border text-center">
+                    <p className="text-xs text-muted-foreground mb-2">NIN Document</p>
+                    {selectedApplication.nin_document_url ? (
+                      <SignedImage 
+                        storedPath={selectedApplication.nin_document_url} 
+                        bucket="documents"
+                        alt="NIN Document" 
+                        className="w-full h-32 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="h-32 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">Not uploaded</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 rounded-lg border text-center">
+                    <p className="text-xs text-muted-foreground mb-2">Signature</p>
+                    {selectedApplication.signature_url ? (
+                      <SignedImage 
+                        storedPath={selectedApplication.signature_url} 
+                        bucket="signatures"
+                        alt="Signature" 
+                        className="w-full h-32 rounded object-contain bg-white"
+                      />
+                    ) : (
+                      <div className="h-32 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">Not uploaded</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
                   <SignedDocumentLink
                     storedPath={selectedApplication.nin_document_url}
-                    bucket="passport-photos"
-                    label="NIN Document"
+                    bucket="documents"
+                    label="Download NIN Document"
                   />
                   <SignedDocumentLink
                     storedPath={selectedApplication.signature_url}
-                    bucket="passport-photos"
-                    label="Signature"
+                    bucket="signatures"
+                    label="Download Signature"
                   />
                 </div>
               </div>
 
-              {/* Referees */}
+              {/* Next of Kin */}
               <div>
-                <h4 className="font-medium mb-3">Referees</h4>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="p-3 rounded-lg border">
-                    <p className="font-medium">Referee 1</p>
-                    <p className="text-sm">{selectedApplication.referee1_name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.referee1_phone}</p>
-                    <p className="text-xs text-muted-foreground">{selectedApplication.referee1_address}</p>
+                <h4 className="font-medium mb-3">Next of Kin Information</h4>
+                <div className="p-4 rounded-lg border bg-muted/20">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Name</p>
+                      <p className="font-medium">{selectedApplication.next_of_kin_name || selectedApplication.referee1_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Phone Number</p>
+                      <p className="font-medium">{selectedApplication.next_of_kin_phone || selectedApplication.referee1_phone || 'N/A'}</p>
+                    </div>
                   </div>
-                  <div className="p-3 rounded-lg border">
-                    <p className="font-medium">Referee 2</p>
-                    <p className="text-sm">{selectedApplication.referee2_name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.referee2_phone}</p>
-                    <p className="text-xs text-muted-foreground">{selectedApplication.referee2_address}</p>
+                  <div className="mt-3">
+                    <p className="text-xs text-muted-foreground">Address</p>
+                    <p className="font-medium">{selectedApplication.next_of_kin_address || selectedApplication.referee1_address || 'N/A'}</p>
                   </div>
                 </div>
               </div>

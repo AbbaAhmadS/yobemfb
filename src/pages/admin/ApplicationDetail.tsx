@@ -27,6 +27,7 @@ import {
   Loader2,
   Building2,
   Eye,
+  Lock,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -73,6 +74,9 @@ export default function ApplicationDetail() {
   const [analysisResult, setAnalysisResult] = useState<string>('');
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{ path: string; label: string } | null>(null);
+
+  // Check if user can view uploaded documents (only Credit Department)
+  const canViewDocuments = userRole === 'credit';
 
   useEffect(() => {
     if (user && id) {
@@ -427,7 +431,7 @@ export default function ApplicationDetail() {
               </CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-4">
-                  {application.passport_photo_url ? (
+                  {canViewDocuments && application.passport_photo_url ? (
                     <SignedImage
                       storedPath={application.passport_photo_url}
                       bucket="passport-photos"
@@ -436,7 +440,11 @@ export default function ApplicationDetail() {
                     />
                   ) : (
                     <div className="h-28 w-28 rounded-lg bg-muted flex items-center justify-center">
-                      <User className="h-10 w-10 text-muted-foreground" />
+                      {canViewDocuments ? (
+                        <User className="h-10 w-10 text-muted-foreground" />
+                      ) : (
+                        <Lock className="h-8 w-8 text-muted-foreground" />
+                      )}
                     </div>
                   )}
                   <div>
@@ -559,45 +567,61 @@ export default function ApplicationDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Documents - Viewable by Credit */}
+            {/* Documents - Viewable by Credit ONLY */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5 text-primary" />
                   Uploaded Documents
+                  {!canViewDocuments && (
+                    <Badge variant="outline" className="ml-auto">
+                      <Lock className="h-3 w-3 mr-1" />
+                      Restricted
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer" onClick={() => {
-                  setSelectedDocument({ path: application.passport_photo_url, label: 'Passport Photo' });
-                  setShowDocumentDialog(true);
-                }}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Passport Photo</span>
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                {canViewDocuments ? (
+                  <>
+                    <div className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer" onClick={() => {
+                      setSelectedDocument({ path: application.passport_photo_url, label: 'Passport Photo' });
+                      setShowDocumentDialog(true);
+                    }}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Passport Photo</span>
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                    <SignedDocumentLink
+                      storedPath={application.nin_document_url}
+                      bucket="loan-uploads"
+                      label="NIN Document"
+                    />
+                    <SignedDocumentLink
+                      storedPath={application.payment_slip_url}
+                      bucket="loan-uploads"
+                      label="Payment Slip"
+                    />
+                    <SignedDocumentLink
+                      storedPath={application.signature_url}
+                      bucket="loan-uploads"
+                      label="Signature"
+                    />
+                    {guarantor && (
+                      <SignedDocumentLink
+                        storedPath={guarantor.signature_url}
+                        bucket="signatures"
+                        label="Guarantor Signature"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Lock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Document access restricted</p>
+                    <p className="text-xs">Only Credit Department can view uploaded documents</p>
                   </div>
-                </div>
-                <SignedDocumentLink
-                  storedPath={application.nin_document_url}
-                  bucket="loan-uploads"
-                  label="NIN Document"
-                />
-                <SignedDocumentLink
-                  storedPath={application.payment_slip_url}
-                  bucket="loan-uploads"
-                  label="Payment Slip"
-                />
-                <SignedDocumentLink
-                  storedPath={application.signature_url}
-                  bucket="loan-uploads"
-                  label="Signature"
-                />
-                {guarantor && (
-                  <SignedDocumentLink
-                    storedPath={guarantor.signature_url}
-                    bucket="signatures"
-                    label="Guarantor Signature"
-                  />
                 )}
               </CardContent>
             </Card>
