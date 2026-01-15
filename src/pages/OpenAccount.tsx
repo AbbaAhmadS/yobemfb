@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Building2, CheckCircle, Loader2, Download } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle, Loader2, Download, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FileUpload } from '@/components/loan-application/FileUpload';
-import { ACCOUNT_TYPE_LABELS } from '@/types/database';
 import { generateAccountApplicationPdf } from '@/utils/accountPdfGenerator';
 
 // Nigerian States
@@ -39,6 +38,7 @@ const NIGERIAN_STATES = [
   'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
 ];
 
+// Removed account_type from schema - defaulting to 'current'
 const accountFormSchema = z.object({
   passport_photo_url: z.string().min(1, 'Passport photo is required'),
   full_name: z.string().min(3, 'Full name is required'),
@@ -54,7 +54,6 @@ const accountFormSchema = z.object({
   next_of_kin_address: z.string().min(10, 'Next of kin address is required'),
   next_of_kin_phone: z.string().min(11, 'Valid phone number is required'),
   signature_url: z.string().min(1, 'Signature is required'),
-  account_type: z.enum(['savings', 'current', 'corporate']),
 });
 
 type AccountFormValues = z.infer<typeof accountFormSchema>;
@@ -66,6 +65,9 @@ export default function OpenAccount() {
   const [isComplete, setIsComplete] = useState(false);
   const [applicationId, setApplicationId] = useState<string>('');
   const [submittedData, setSubmittedData] = useState<AccountFormValues | null>(null);
+  const [hasExistingApplication, setHasExistingApplication] = useState(false);
+  const [existingApplicationId, setExistingApplicationId] = useState<string | null>(null);
+  const [isCheckingExisting, setIsCheckingExisting] = useState(true);
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
@@ -84,12 +86,44 @@ export default function OpenAccount() {
       next_of_kin_address: '',
       next_of_kin_phone: '',
       signature_url: '',
-      account_type: 'savings',
     },
   });
 
+  // Check for existing application
+  useEffect(() => {
+    const checkExistingApplication = async () => {
+      if (!user) {
+        setIsCheckingExisting(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('account_applications')
+          .select('id, application_id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setHasExistingApplication(true);
+          setExistingApplicationId(data[0].application_id);
+        }
+      } catch (error) {
+        console.error('Error checking existing application:', error);
+      } finally {
+        setIsCheckingExisting(false);
+      }
+    };
+
+    checkExistingApplication();
+  }, [user]);
+
   // Auto-save draft to localStorage
   useEffect(() => {
+    if (hasExistingApplication) return;
+    
     const savedDraft = localStorage.getItem('account_application_draft');
     if (savedDraft) {
       try {
@@ -99,14 +133,16 @@ export default function OpenAccount() {
         console.error('Failed to load draft:', e);
       }
     }
-  }, []);
+  }, [hasExistingApplication]);
 
   useEffect(() => {
+    if (hasExistingApplication) return;
+    
     const subscription = form.watch((values) => {
       localStorage.setItem('account_application_draft', JSON.stringify(values));
     });
     return () => subscription.unsubscribe();
-  }, [form.watch]);
+  }, [form.watch, hasExistingApplication]);
 
   const handleSubmit = async (data: AccountFormValues) => {
     if (!user) {
@@ -125,7 +161,7 @@ export default function OpenAccount() {
 
       const newApplicationId = appIdData;
 
-      // Create account application with all new fields
+      // Create account application with account_type defaulting to 'current'
       const { error: accountError } = await supabase
         .from('account_applications')
         .insert({
@@ -139,7 +175,7 @@ export default function OpenAccount() {
           nin: data.nin,
           nin_document_url: data.nin_document_url,
           signature_url: data.signature_url,
-          account_type: data.account_type,
+          account_type: 'current', // Default to current account
           // New fields
           state: data.state,
           local_government: data.local_government,
@@ -185,10 +221,56 @@ export default function OpenAccount() {
       next_of_kin_name: submittedData.next_of_kin_name,
       next_of_kin_address: submittedData.next_of_kin_address,
       next_of_kin_phone: submittedData.next_of_kin_phone,
-      account_type: submittedData.account_type,
+      account_type: 'current',
       status: 'pending',
     });
   };
+
+  if (isCheckingExisting) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <Card className="card-elevated text-center">
+          <CardContent className="py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Checking application status...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show message if user already has an application
+  if (hasExistingApplication) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <Card className="card-elevated text-center">
+          <CardHeader>
+            <div className="mx-auto h-20 w-20 rounded-full bg-warning/10 flex items-center justify-center mb-4">
+              <AlertTriangle className="h-10 w-10 text-warning" />
+            </div>
+            <CardTitle className="font-display text-2xl">Application Already Submitted</CardTitle>
+            <CardDescription className="text-base">
+              You have already submitted an account opening application with Yobe Microfinance Bank.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4">
+              <p className="text-sm text-muted-foreground">Your Application ID</p>
+              <p className="text-xl font-mono font-bold text-primary">{existingApplicationId}</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              You can only submit one account opening application. Please check your dashboard for the status of your existing application.
+            </p>
+            <div className="flex gap-3 justify-center pt-4">
+              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+                Back to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isComplete) {
     return (
@@ -234,7 +316,7 @@ export default function OpenAccount() {
         </Button>
         <div>
           <h1 className="font-display text-2xl font-bold">Open Bank Account</h1>
-          <p className="text-muted-foreground">Apply for a Yobe Microfinance Bank account</p>
+          <p className="text-muted-foreground">Apply for a Yobe Microfinance Bank Current Account</p>
         </div>
       </div>
 
@@ -245,8 +327,8 @@ export default function OpenAccount() {
               <Building2 className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-display">Account Opening Form</CardTitle>
-              <CardDescription>Complete all fields to open your account</CardDescription>
+              <CardTitle className="font-display">Current Account Opening Form</CardTitle>
+              <CardDescription>Complete all fields to open your current account</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -276,7 +358,7 @@ export default function OpenAccount() {
                 />
               </div>
 
-              {/* Step 2-7: Personal Information */}
+              {/* Step 2-7: Personal Information - Removed Account Type */}
               <div className="border-b pb-6">
                 <h3 className="font-medium mb-4 text-lg">2-7. Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -360,31 +442,6 @@ export default function OpenAccount() {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="account_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Type *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select account type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.entries(ACCOUNT_TYPE_LABELS).map(([key, label]) => (
-                              <SelectItem key={key} value={key}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
                 <div className="mt-6">
@@ -459,16 +516,16 @@ export default function OpenAccount() {
                 </div>
               </div>
 
-              {/* Step 11: Next of Kin */}
+              {/* Step 11-13: Next of Kin */}
               <div className="border-b pb-6">
-                <h3 className="font-medium mb-4 text-lg">11. Next of Kin Information</h3>
+                <h3 className="font-medium mb-4 text-lg">11-13. Next of Kin Information</h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="next_of_kin_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Next of Kin Name *</FormLabel>
+                        <FormLabel>Next of Kin Full Name *</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter next of kin name" {...field} />
                         </FormControl>
@@ -492,7 +549,7 @@ export default function OpenAccount() {
                   />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-6">
                   <FormField
                     control={form.control}
                     name="next_of_kin_address"
@@ -509,9 +566,9 @@ export default function OpenAccount() {
                 </div>
               </div>
 
-              {/* Step 12: Signature */}
+              {/* Step 14: Signature */}
               <div className="border-b pb-6">
-                <h3 className="font-medium mb-4 text-lg">12. Signature</h3>
+                <h3 className="font-medium mb-4 text-lg">14. Signature</h3>
                 <FormField
                   control={form.control}
                   name="signature_url"
@@ -519,10 +576,10 @@ export default function OpenAccount() {
                     <FormItem>
                       <FileUpload
                         bucket="signatures"
-                        folder="account-applications"
+                        folder="account-signatures"
                         accept="image/jpeg,image/jpg,image/png"
-                        label="Upload Signature *"
-                        description="Upload your signature (JPG, PNG - max 500KB)"
+                        label="Upload Your Signature *"
+                        description="Sign on white paper and upload (JPG, PNG - max 500KB)"
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -532,24 +589,21 @@ export default function OpenAccount() {
                 />
               </div>
 
-              {/* Step 13: Submit */}
-              <div className="pt-4">
-                <h3 className="font-medium mb-4 text-lg">13. Review and Submit</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Please review all information above before submitting your application.
-                </p>
-                <div className="flex justify-end">
-                  <Button type="submit" size="lg" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      'Submit Application'
-                    )}
-                  </Button>
-                </div>
+              {/* Submit */}
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Application'
+                  )}
+                </Button>
               </div>
             </form>
           </Form>

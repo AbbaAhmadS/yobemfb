@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import {
   BarChart3,
   TrendingUp,
@@ -19,13 +20,12 @@ import {
   XCircle,
   ArrowLeft,
   RefreshCw,
-  Building2,
-  CreditCard,
-  Wallet,
   Eye,
   FileText,
   AlertTriangle,
-  Download,
+  LogOut,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +39,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 
 interface AccountApplication {
@@ -64,6 +65,7 @@ interface AccountApplication {
   referee2_phone: string;
   referee2_address: string;
   notes: string | null;
+  decline_reason?: string | null;
   // New fields
   state?: string;
   local_government?: string;
@@ -81,15 +83,12 @@ interface OperationsAnalyticsData {
     approved: number;
     declined: number;
     underReview: number;
-    savingsAccounts: number;
-    currentAccounts: number;
-    corporateAccounts: number;
   };
   trends: {
     accountsThisMonth: number;
     accountsLastMonth: number;
-    savingsThisMonth: number;
-    currentThisMonth: number;
+    approvedThisMonth: number;
+    declinedThisMonth: number;
   };
 }
 
@@ -103,12 +102,15 @@ const statusConfig = {
 
 export default function OperationsAnalyticsDashboard() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<OperationsAnalyticsData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedApplication, setSelectedApplication] = useState<AccountApplication | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [showDeclineDialog, setShowDeclineDialog] = useState(false);
+  const [declineReason, setDeclineReason] = useState('');
 
   useEffect(() => {
     if (!isAdmin) {
@@ -159,16 +161,13 @@ export default function OperationsAnalyticsDashboard() {
   ) => {
     const accounts = accountData as AccountApplication[];
 
-    // Calculate account stats
+    // Calculate account stats - removed account type breakdown
     const accountStats = {
       total: accounts.length,
       pending: accounts.filter(a => a.status === 'pending').length,
       approved: accounts.filter(a => a.status === 'approved').length,
       declined: accounts.filter(a => a.status === 'declined').length,
       underReview: accounts.filter(a => a.status === 'under_review').length,
-      savingsAccounts: accounts.filter(a => a.account_type === 'savings').length,
-      currentAccounts: accounts.filter(a => a.account_type === 'current').length,
-      corporateAccounts: accounts.filter(a => a.account_type === 'corporate').length,
     };
 
     // Calculate trends
@@ -178,12 +177,12 @@ export default function OperationsAnalyticsDashboard() {
       return date >= startOfLastMonth && date <= endOfLastMonth;
     }).length;
 
-    const savingsThisMonth = accounts.filter(a => 
-      new Date(a.created_at) >= startOfMonth && a.account_type === 'savings'
+    const approvedThisMonth = accounts.filter(a => 
+      new Date(a.created_at) >= startOfMonth && a.status === 'approved'
     ).length;
 
-    const currentThisMonth = accounts.filter(a => 
-      new Date(a.created_at) >= startOfMonth && a.account_type === 'current'
+    const declinedThisMonth = accounts.filter(a => 
+      new Date(a.created_at) >= startOfMonth && a.status === 'declined'
     ).length;
 
     setAnalytics({
@@ -192,31 +191,62 @@ export default function OperationsAnalyticsDashboard() {
       trends: {
         accountsThisMonth,
         accountsLastMonth,
-        savingsThisMonth,
-        currentThisMonth,
+        approvedThisMonth,
+        declinedThisMonth,
       },
     });
   };
 
-  const handleStatusUpdate = async (appId: string, newStatus: 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged') => {
+  const handleStatusUpdate = async (appId: string, newStatus: 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged', reason?: string) => {
     setIsUpdating(true);
     try {
+      const updateData: Record<string, any> = { status: newStatus };
+      if (newStatus === 'declined' && reason) {
+        updateData.decline_reason = reason;
+      }
+
       const { error } = await supabase
         .from('account_applications')
-        .update({ status: newStatus })
+        .update(updateData)
         .eq('id', appId);
 
       if (error) throw error;
 
-      toast.success(`Application status updated to ${newStatus}`);
+      toast.success(`Application ${newStatus === 'approved' ? 'approved' : newStatus === 'declined' ? 'declined' : 'updated'} successfully`);
       fetchAnalytics();
       setSelectedApplication(null);
+      setShowDeclineDialog(false);
+      setDeclineReason('');
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update application status');
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleDeclineClick = () => {
+    setShowDeclineDialog(true);
+  };
+
+  const handleConfirmDecline = () => {
+    if (!declineReason.trim()) {
+      toast.error('Please provide a reason for declining');
+      return;
+    }
+    if (selectedApplication) {
+      handleStatusUpdate(selectedApplication.id, 'declined', declineReason);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/admin/login');
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.documentElement.classList.toggle('dark');
   };
 
   const getTrendPercentage = (current: number, previous: number) => {
@@ -278,10 +308,19 @@ export default function OperationsAnalyticsDashboard() {
               <p className="text-sm text-muted-foreground">Account opening applications management</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchAnalytics}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchAnalytics}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
+              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-destructive">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -294,12 +333,12 @@ export default function OperationsAnalyticsDashboard() {
           />
         </div>
 
-        {/* Overview Stats - NO AMOUNTS, only account counts */}
+        {/* Overview Stats - Updated: Removed account type breakdown, added relevant stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Total Account Applications</p>
+                <p className="text-sm text-muted-foreground">Total Applications</p>
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <p className="text-3xl font-bold">{analytics.accountStats.total}</p>
@@ -316,12 +355,12 @@ export default function OperationsAnalyticsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Savings Accounts</p>
-                <Wallet className="h-5 w-5 text-success" />
+                <p className="text-sm text-muted-foreground">Pending Review</p>
+                <Clock className="h-5 w-5 text-warning" />
               </div>
-              <p className="text-3xl font-bold">{analytics.accountStats.savingsAccounts}</p>
+              <p className="text-3xl font-bold">{analytics.accountStats.pending}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                {analytics.trends.savingsThisMonth} this month
+                {analytics.accountStats.underReview} under review
               </p>
             </CardContent>
           </Card>
@@ -329,12 +368,12 @@ export default function OperationsAnalyticsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Current Accounts</p>
-                <CreditCard className="h-5 w-5 text-primary" />
+                <p className="text-sm text-muted-foreground">Approved This Month</p>
+                <CheckCircle className="h-5 w-5 text-success" />
               </div>
-              <p className="text-3xl font-bold">{analytics.accountStats.currentAccounts}</p>
+              <p className="text-3xl font-bold">{analytics.trends.approvedThisMonth}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                {analytics.trends.currentThisMonth} this month
+                {analytics.accountStats.approved} total approved
               </p>
             </CardContent>
           </Card>
@@ -342,12 +381,16 @@ export default function OperationsAnalyticsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Corporate Accounts</p>
-                <Building2 className="h-5 w-5 text-secondary" />
+                <p className="text-sm text-muted-foreground">Approval Rate</p>
+                <BarChart3 className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-3xl font-bold">{analytics.accountStats.corporateAccounts}</p>
+              <p className="text-3xl font-bold">
+                {analytics.accountStats.total > 0 
+                  ? ((analytics.accountStats.approved / analytics.accountStats.total) * 100).toFixed(1)
+                  : 0}%
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Business accounts
+                {analytics.accountStats.declined} declined
               </p>
             </CardContent>
           </Card>
@@ -428,72 +471,37 @@ export default function OperationsAnalyticsDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">Account Types Distribution</CardTitle>
-              <CardDescription>Breakdown by account type</CardDescription>
+              <CardTitle className="font-display">Monthly Performance</CardTitle>
+              <CardDescription>This month's application metrics</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-success" />
-                    <span>Savings</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
-                      <div 
-                        className="h-full bg-success rounded-full"
-                        style={{ width: `${(analytics.accountStats.savingsAccounts / analytics.accountStats.total) * 100 || 0}%` }}
-                      />
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">New Applications</p>
+                      <p className="text-2xl font-bold">{analytics.trends.accountsThisMonth}</p>
                     </div>
-                    <span className="font-medium w-8">{analytics.accountStats.savingsAccounts}</span>
+                    <div>
+                      <p className="text-muted-foreground">Last Month</p>
+                      <p className="text-2xl font-bold text-muted-foreground">{analytics.trends.accountsLastMonth}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-primary" />
-                    <span>Current</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: `${(analytics.accountStats.currentAccounts / analytics.accountStats.total) * 100 || 0}%` }}
-                      />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border bg-success/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                      <span className="text-sm font-medium">Approved</span>
                     </div>
-                    <span className="font-medium w-8">{analytics.accountStats.currentAccounts}</span>
+                    <p className="text-2xl font-bold text-success">{analytics.trends.approvedThisMonth}</p>
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-secondary" />
-                    <span>Corporate</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
-                      <div 
-                        className="h-full bg-secondary rounded-full"
-                        style={{ width: `${(analytics.accountStats.corporateAccounts / analytics.accountStats.total) * 100 || 0}%` }}
-                      />
+                  <div className="p-4 rounded-lg border bg-destructive/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <XCircle className="h-4 w-4 text-destructive" />
+                      <span className="text-sm font-medium">Declined</span>
                     </div>
-                    <span className="font-medium w-8">{analytics.accountStats.corporateAccounts}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 p-4 rounded-lg bg-muted/50">
-                <h4 className="font-medium mb-2">This Month Summary</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">New Applications</p>
-                    <p className="text-lg font-semibold">{analytics.trends.accountsThisMonth}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Approval Rate</p>
-                    <p className="text-lg font-semibold">
-                      {analytics.accountStats.total > 0 
-                        ? ((analytics.accountStats.approved / analytics.accountStats.total) * 100).toFixed(1)
-                        : 0}%
-                    </p>
+                    <p className="text-2xl font-bold text-destructive">{analytics.trends.declinedThisMonth}</p>
                   </div>
                 </div>
               </div>
@@ -539,7 +547,7 @@ export default function OperationsAnalyticsDashboard() {
                         <div>
                           <p className="font-medium">{app.full_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {app.application_id} • {app.account_type.charAt(0).toUpperCase() + app.account_type.slice(1)} Account
+                            {app.application_id} • Current Account
                           </p>
                           <p className="text-xs text-muted-foreground">{formatDate(app.created_at)}</p>
                         </div>
@@ -561,15 +569,15 @@ export default function OperationsAnalyticsDashboard() {
       </main>
 
       {/* Application Detail Dialog - Full Access for Account Opening Dept */}
-      <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
+      <Dialog open={!!selectedApplication && !showDeclineDialog} onOpenChange={() => setSelectedApplication(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
+              <Users className="h-5 w-5 text-primary" />
               Account Application - {selectedApplication?.application_id}
             </DialogTitle>
             <DialogDescription>
-              {selectedApplication?.account_type.charAt(0).toUpperCase()}{selectedApplication?.account_type.slice(1)} Account Application
+              Current Account Application
             </DialogDescription>
           </DialogHeader>
           
@@ -607,7 +615,7 @@ export default function OperationsAnalyticsDashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Account Type</p>
-                    <p className="font-medium">{selectedApplication.account_type.charAt(0).toUpperCase() + selectedApplication.account_type.slice(1)} Account</p>
+                    <p className="font-medium">Current Account</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">State</p>
@@ -745,7 +753,7 @@ export default function OperationsAnalyticsDashboard() {
                 </Button>
                 <Button 
                   variant="destructive"
-                  onClick={() => handleStatusUpdate(selectedApplication.id, 'declined')}
+                  onClick={handleDeclineClick}
                   disabled={isUpdating || selectedApplication.status === 'declined'}
                 >
                   <XCircle className="h-4 w-4 mr-2" />
@@ -754,6 +762,49 @@ export default function OperationsAnalyticsDashboard() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Decline Reason Dialog */}
+      <Dialog open={showDeclineDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowDeclineDialog(false);
+          setDeclineReason('');
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Decline Application
+            </DialogTitle>
+            <DialogDescription>
+              Please provide a reason for declining this account application. This will be visible to the applicant.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Enter reason for declining (required)..."
+              value={declineReason}
+              onChange={(e) => setDeclineReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowDeclineDialog(false);
+              setDeclineReason('');
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDecline}
+              disabled={isUpdating || !declineReason.trim()}
+            >
+              Confirm Decline
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
