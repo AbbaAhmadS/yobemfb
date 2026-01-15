@@ -488,6 +488,22 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Approved Amount Display */}
+              {selectedAppForView.status === 'approved' && selectedAppForView.approved_amount && (
+                <div className="p-4 rounded-lg border-2 border-success bg-success/10">
+                  <span className="text-sm text-muted-foreground">Approved Amount:</span>
+                  <p className="text-xl font-bold text-success">{formatAmount(selectedAppForView.approved_amount)}</p>
+                </div>
+              )}
+
+              {/* Decline Reason Display */}
+              {selectedAppForView.status === 'declined' && selectedAppForView.decline_reason && (
+                <div className="p-4 rounded-lg border-2 border-destructive bg-destructive/10">
+                  <span className="text-sm text-muted-foreground">Reason for Decline:</span>
+                  <p className="font-medium text-destructive">{selectedAppForView.decline_reason}</p>
+                </div>
+              )}
+
               <Button 
                 className="w-full" 
                 onClick={() => {
