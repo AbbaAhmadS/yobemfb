@@ -100,7 +100,7 @@ export default function AdminLogin() {
             <Alert variant="destructive" className="mb-6">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Account locked due to too many failed attempts. Contact the developer at 08142576613.
+                Account locked due to too many failed attempts. Contact the developer at 08080532226.
               </AlertDescription>
             </Alert>
           )}
