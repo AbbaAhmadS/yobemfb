@@ -29,9 +29,17 @@ export function useSignedUrl(
       return;
     }
 
-    // If it's already a signed URL or external URL, use it directly
-    if (storedPath.includes('token=') || !storedPath.includes('supabase')) {
-      // Check if it's a public URL from our supabase (old format)
+    const isHttpUrl = /^https?:\/\//i.test(storedPath);
+
+    // If it's already a signed URL, use it directly
+    if (storedPath.includes('token=')) {
+      setSignedUrl(storedPath);
+      return;
+    }
+
+    // If it's an http(s) URL, either re-sign it (if it's a backend storage URL) or use it as-is
+    if (isHttpUrl) {
+      // Check if it's a public URL from our backend storage (legacy format)
       if (storedPath.includes('/storage/v1/object/public/')) {
         // Extract the path from the public URL and create signed URL
         const match = storedPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
@@ -41,7 +49,18 @@ export function useSignedUrl(
           return;
         }
       }
-      // External URL or already signed, use as-is
+
+      // If it's a storage URL, extract bucket/path and create a signed URL
+      if (storedPath.includes('/storage/v1/object/')) {
+        const match = storedPath.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)/);
+        if (match) {
+          const [, extractedBucket, filePath] = match;
+          generateSignedUrl(extractedBucket, filePath);
+          return;
+        }
+      }
+
+      // External URL
       setSignedUrl(storedPath);
       return;
     }
@@ -99,9 +118,16 @@ export async function getSignedUrl(
 ): Promise<string | null> {
   if (!storedPath) return null;
 
-  // If it's already a signed URL or external URL, return as-is
-  if (storedPath.includes('token=') || !storedPath.includes('supabase')) {
-    // Check if it's a public URL from our supabase (old format)
+  const isHttpUrl = /^https?:\/\//i.test(storedPath);
+
+  // If it's already a signed URL, return as-is
+  if (storedPath.includes('token=')) {
+    return storedPath;
+  }
+
+  // If it's an http(s) URL, attempt to re-sign if it's a storage URL; otherwise return as-is
+  if (isHttpUrl) {
+    // Legacy public URL format
     if (storedPath.includes('/storage/v1/object/public/')) {
       const match = storedPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
       if (match) {
@@ -109,7 +135,7 @@ export async function getSignedUrl(
         const { data, error } = await supabase.storage
           .from(extractedBucket)
           .createSignedUrl(filePath, expiresIn);
-        
+
         if (error) {
           console.error('Error creating signed URL:', error);
           return storedPath; // Fallback
@@ -117,6 +143,24 @@ export async function getSignedUrl(
         return data.signedUrl;
       }
     }
+
+    // Already a storage URL (public or sign)
+    if (storedPath.includes('/storage/v1/object/')) {
+      const match = storedPath.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)/);
+      if (match) {
+        const [, extractedBucket, filePath] = match;
+        const { data, error } = await supabase.storage
+          .from(extractedBucket)
+          .createSignedUrl(filePath, expiresIn);
+
+        if (error) {
+          console.error('Error creating signed URL:', error);
+          return storedPath; // Fallback
+        }
+        return data.signedUrl;
+      }
+    }
+
     return storedPath;
   }
 
