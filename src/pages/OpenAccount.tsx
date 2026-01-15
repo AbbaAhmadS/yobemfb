@@ -175,7 +175,19 @@ export default function OpenAccount() {
     if (!submittedData) return;
     generateAccountApplicationPdf({
       applicationId,
-      ...submittedData,
+      passport_photo_url: submittedData.passport_photo_url,
+      full_name: submittedData.full_name,
+      phone_number: submittedData.phone_number,
+      state: submittedData.state,
+      local_government: submittedData.local_government,
+      address: submittedData.address,
+      date_of_birth: submittedData.date_of_birth,
+      bvn: submittedData.bvn,
+      nin: submittedData.nin,
+      next_of_kin_name: submittedData.next_of_kin_name,
+      next_of_kin_address: submittedData.next_of_kin_address,
+      next_of_kin_phone: submittedData.next_of_kin_phone,
+      account_type: submittedData.account_type,
       status: 'pending',
     });
   };
