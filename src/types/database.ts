@@ -56,6 +56,7 @@ export interface AccountApplication {
   referee2_address: string;
   status: ApplicationStatus;
   notes: string | null;
+  decline_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -95,6 +96,8 @@ export interface LoanApplication {
   coo_approved_by: string | null;
   coo_approved_at: string | null;
   notes: string | null;
+  decline_reason?: string | null;
+  approved_amount?: number | null;
   current_step: number;
   is_draft: boolean;
   created_at: string;

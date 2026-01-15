@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, Download } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -219,10 +219,26 @@ export default function ApplyLoan() {
               <p className="text-sm text-muted-foreground">Application ID</p>
               <p className="text-xl font-mono font-bold text-primary">{applicationId}</p>
             </div>
+            
             <p className="text-sm text-muted-foreground">
               Your application is now under review. You will be notified once a decision has been made.
               Loan disbursements are processed at the end of each month.
             </p>
+            
+            {/* Important SMS notification message */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-left">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-sm text-primary">Important Information</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Please login to your loan application dashboard after <strong>24-48 hours</strong> to check your loan status. 
+                    You will receive an <strong>SMS notification</strong> if your loan is approved.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <div className="flex gap-3 justify-center pt-4">
               <Button variant="outline" onClick={() => navigate('/dashboard')}>
                 Back to Dashboard

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +30,7 @@ import {
   Building2,
   Eye,
   Lock,
+  Banknote,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,6 +77,10 @@ export default function ApplicationDetail() {
   const [analysisResult, setAnalysisResult] = useState<string>('');
   const [showDocumentDialog, setShowDocumentDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<{ path: string; label: string } | null>(null);
+  
+  // Credit approval with amount
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState<string>('');
 
   // Check if user can view uploaded documents (only Credit Department)
   const canViewDocuments = userRole === 'credit';
@@ -188,7 +195,18 @@ export default function ApplicationDetail() {
     }
   };
 
-  const handleApprove = async () => {
+  const handleApproveClick = () => {
+    if (userRole === 'credit') {
+      // Credit department needs to enter approved amount
+      setApprovedAmount(application?.specific_amount?.toString() || '');
+      setShowApproveDialog(true);
+    } else {
+      // Other roles can approve directly
+      handleApprove();
+    }
+  };
+
+  const handleApprove = async (enteredAmount?: number) => {
     if (!application || !userRole || !user) return;
 
     setIsUpdating(true);
@@ -201,6 +219,9 @@ export default function ApplicationDetail() {
           updateData.credit_approval = true;
           updateData.credit_approved_by = user.id;
           updateData.credit_approved_at = new Date().toISOString();
+          if (enteredAmount !== undefined) {
+            updateData.approved_amount = enteredAmount;
+          }
           break;
         case 'audit':
           updateData.audit_approval = true;
@@ -232,9 +253,11 @@ export default function ApplicationDetail() {
         target_id: application.id,
         previous_status: application.status,
         new_status: newStatus,
+        notes: userRole === 'credit' && enteredAmount ? `Approved amount: ₦${enteredAmount.toLocaleString()}` : null,
       });
 
       toast.success('Application approved successfully');
+      setShowApproveDialog(false);
       fetchData();
     } catch (error) {
       console.error('Error approving:', error);
@@ -242,6 +265,15 @@ export default function ApplicationDetail() {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleCreditApprove = () => {
+    const amount = parseFloat(approvedAmount.replace(/,/g, ''));
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid approved amount');
+      return;
+    }
+    handleApprove(amount);
   };
 
   const handleDecline = async () => {
@@ -254,6 +286,7 @@ export default function ApplicationDetail() {
         .update({
           status: 'declined',
           notes: declineNotes,
+          decline_reason: declineNotes,
         })
         .eq('id', application.id);
 
@@ -373,7 +406,7 @@ export default function ApplicationDetail() {
                   <XCircle className="h-4 w-4 mr-2" />
                   Decline
                 </Button>
-                <Button onClick={handleApprove} disabled={isUpdating}>
+                <Button onClick={handleApproveClick} disabled={isUpdating}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve
                 </Button>
@@ -507,6 +540,17 @@ export default function ApplicationDetail() {
                   <span className="text-muted-foreground">YobeMFB Account Number:</span>
                   <p className="font-medium">{application.bank_account_number}</p>
                 </div>
+                
+                {/* Approved Amount - Display in green if set */}
+                {application.approved_amount && (
+                  <div className="col-span-2 p-4 rounded-lg bg-success/10 border border-success/30">
+                    <div className="flex items-center gap-2">
+                      <Banknote className="h-5 w-5 text-success" />
+                      <span className="text-muted-foreground">Approved Amount:</span>
+                    </div>
+                    <p className="font-bold text-2xl text-success mt-1">{formatAmount(application.approved_amount)}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -642,6 +686,11 @@ export default function ApplicationDetail() {
                     <p className="font-medium text-sm">Credit Department</p>
                     <p className="text-xs text-muted-foreground">
                       {application.credit_approval ? 'Approved' : 'Pending'}
+                      {application.credit_approval && application.approved_amount && (
+                        <span className="text-success ml-1">
+                          ({formatAmount(application.approved_amount)})
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -696,17 +745,68 @@ export default function ApplicationDetail() {
         </div>
       </main>
 
+      {/* Credit Approve Dialog - Enter Amount */}
+      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Banknote className="h-5 w-5 text-success" />
+              Approve Loan Application
+            </DialogTitle>
+            <DialogDescription>
+              Enter the approved loan amount based on the customer's credit viability.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Requested Amount</p>
+              <p className="text-lg font-bold">{formatAmount(application?.specific_amount || 0)}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="approved-amount">Approved Amount (₦)</Label>
+              <Input
+                id="approved-amount"
+                type="number"
+                placeholder="Enter approved amount"
+                value={approvedAmount}
+                onChange={(e) => setApprovedAmount(e.target.value)}
+                className="text-lg"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the amount the customer qualifies for based on credit assessment.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApproveDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreditApprove} 
+              disabled={isUpdating || !approvedAmount.trim()}
+              className="bg-success hover:bg-success/90"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Approve with Amount
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Decline Dialog */}
       <Dialog open={showDeclineDialog} onOpenChange={setShowDeclineDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Decline Application</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Decline Application
+            </DialogTitle>
             <DialogDescription>
-              Please provide a reason for declining this application.
+              Please provide a reason for declining this application. This will be visible to the applicant.
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="Enter reason for declining..."
+            placeholder="Enter reason for declining (required)..."
             value={declineNotes}
             onChange={(e) => setDeclineNotes(e.target.value)}
             rows={4}
