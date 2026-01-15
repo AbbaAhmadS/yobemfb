@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import {
   Card,
   CardContent,
@@ -10,6 +11,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   FileText,
   Plus,
@@ -23,12 +30,15 @@ import {
   Users,
   CreditCard,
   BarChart3,
+  CalendarIcon,
+  DollarSign,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
 import { toast } from 'sonner';
 import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
+import { cn } from '@/lib/utils';
 
 const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; className: string }> = {
   pending: { icon: Clock, className: 'status-pending' },
@@ -45,11 +55,15 @@ export default function CreditAdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
     approved: 0,
     declined: 0,
+    totalLoanValue: 0,
+    totalApprovedAmount: 0,
   });
 
   useEffect(() => {
@@ -70,13 +84,7 @@ export default function CreditAdminDashboard() {
 
       const apps = (data || []) as LoanApplication[];
       setApplications(apps);
-
-      setStats({
-        total: apps.length,
-        pending: apps.filter((a) => a.status === 'pending').length,
-        approved: apps.filter((a) => a.status === 'approved').length,
-        declined: apps.filter((a) => a.status === 'declined').length,
-      });
+      updateStats(apps);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
@@ -84,6 +92,40 @@ export default function CreditAdminDashboard() {
       setIsLoading(false);
     }
   };
+
+  const updateStats = (apps: LoanApplication[]) => {
+    // Filter by date range if set
+    let filtered = apps;
+    if (dateFrom) {
+      filtered = filtered.filter(a => new Date(a.created_at) >= dateFrom);
+    }
+    if (dateTo) {
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(a => new Date(a.created_at) <= endOfDay);
+    }
+
+    const totalLoanValue = filtered.reduce((sum, a) => sum + (a.specific_amount || 0), 0);
+    const totalApprovedAmount = filtered
+      .filter(a => a.status === 'approved')
+      .reduce((sum, a) => sum + (a.approved_amount || 0), 0);
+
+    setStats({
+      total: filtered.length,
+      pending: filtered.filter((a) => a.status === 'pending').length,
+      approved: filtered.filter((a) => a.status === 'approved').length,
+      declined: filtered.filter((a) => a.status === 'declined').length,
+      totalLoanValue,
+      totalApprovedAmount,
+    });
+  };
+
+  // Update stats when date range changes
+  useEffect(() => {
+    if (applications.length > 0) {
+      updateStats(applications);
+    }
+  }, [dateFrom, dateTo]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -176,16 +218,59 @@ export default function CreditAdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Search Bar */}
-        <div className="mb-6">
-          <AdminSearchBar 
-            onSearch={setSearchQuery}
-            placeholder="Search by Application ID, Name, or Account Number..."
-          />
+        {/* Search Bar and Date Range */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <AdminSearchBar 
+              onSearch={setSearchQuery}
+              placeholder="Search by Application ID, Name, or Account Number..."
+            />
+          </div>
+          <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "PPP") : "From date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, "PPP") : "To date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
@@ -234,6 +319,32 @@ export default function CreditAdminDashboard() {
                 <div>
                   <p className="text-2xl font-bold">{stats.declined}</p>
                   <p className="text-sm text-muted-foreground">Declined</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-lg bg-secondary/20 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-secondary-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{formatAmount(stats.totalLoanValue)}</p>
+                  <p className="text-sm text-muted-foreground">Total Loan Value</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success">{formatAmount(stats.totalApprovedAmount)}</p>
+                  <p className="text-sm text-muted-foreground">Total Approved Amount</p>
                 </div>
               </div>
             </CardContent>
