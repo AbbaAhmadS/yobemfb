@@ -88,9 +88,9 @@ export function Step1BasicInfo({ initialData, onSubmit }: Step1Props) {
                     <FileUpload
                       bucket="passport-photos"
                       folder="loan-applications"
-                      accept="image/*"
-                      label="Passport Photograph (Required)"
-                      description="Upload a recent passport photograph. This will serve as your avatar throughout the application process. Max 500KB."
+                      accept="image/jpeg,image/jpg,image/png"
+                      label="Passport Photograph *"
+                      description="Upload a recent passport photograph (JPG, PNG - max 500KB). This will serve as your avatar."
                       value={field.value}
                       onChange={field.onChange}
                     />

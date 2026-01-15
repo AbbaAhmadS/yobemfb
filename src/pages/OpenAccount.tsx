@@ -134,27 +134,25 @@ export default function OpenAccount() {
           passport_photo_url: data.passport_photo_url,
           full_name: data.full_name,
           phone_number: data.phone_number,
-          state: data.state,
-          local_government: data.local_government,
           address: data.address,
-          date_of_birth: data.date_of_birth,
           bvn: data.bvn,
           nin: data.nin,
           nin_document_url: data.nin_document_url,
+          signature_url: data.signature_url,
+          account_type: data.account_type,
+          // New fields
+          state: data.state,
+          local_government: data.local_government,
+          date_of_birth: data.date_of_birth,
           next_of_kin_name: data.next_of_kin_name,
           next_of_kin_address: data.next_of_kin_address,
           next_of_kin_phone: data.next_of_kin_phone,
-          signature_url: data.signature_url,
-          account_type: data.account_type,
-          // Legacy fields - set to empty string for compatibility
+          // Legacy fields - use next of kin data for compatibility
           referee1_name: data.next_of_kin_name,
           referee1_phone: data.next_of_kin_phone,
           referee1_address: data.next_of_kin_address,
-          referee2_name: '',
-          referee2_phone: '',
-          referee2_address: '',
           status: 'pending',
-        });
+        } as any);
 
       if (accountError) throw accountError;
 

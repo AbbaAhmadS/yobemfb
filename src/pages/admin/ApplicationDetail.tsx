@@ -595,17 +595,17 @@ export default function ApplicationDetail() {
                     </div>
                     <SignedDocumentLink
                       storedPath={application.nin_document_url}
-                      bucket="loan-uploads"
+                      bucket="documents"
                       label="NIN Document"
                     />
                     <SignedDocumentLink
                       storedPath={application.payment_slip_url}
-                      bucket="loan-uploads"
+                      bucket="documents"
                       label="Payment Slip"
                     />
                     <SignedDocumentLink
                       storedPath={application.signature_url}
-                      bucket="loan-uploads"
+                      bucket="signatures"
                       label="Signature"
                     />
                     {guarantor && (
