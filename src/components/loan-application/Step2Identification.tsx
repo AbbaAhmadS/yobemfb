@@ -90,9 +90,9 @@ export function Step2Identification({ initialData, onSubmit, onBack }: Step2Prop
               <FileUpload
                 bucket="documents"
                 folder="nin-documents"
-                accept="image/*,.pdf"
-                label="NIN Slip / National ID Card"
-                description="Upload a clear image or PDF of your NIN document"
+                accept="image/jpeg,image/jpg,image/png"
+                label="NIN Slip / National ID Card *"
+                description="Upload a clear image of your NIN document (JPG, PNG - max 500KB)"
                 value={field.value}
                 onChange={field.onChange}
               />
@@ -109,9 +109,9 @@ export function Step2Identification({ initialData, onSubmit, onBack }: Step2Prop
               <FileUpload
                 bucket="documents"
                 folder="payment-slips"
-                accept="image/*,.pdf"
-                label="Recent Payment Slip / Salary Advice"
-                description="Upload your most recent salary payment slip"
+                accept="image/jpeg,image/jpg,image/png"
+                label="Recent Payment Slip / Salary Advice *"
+                description="Upload your most recent salary payment slip (JPG, PNG - max 500KB)"
                 value={field.value}
                 onChange={field.onChange}
               />
@@ -128,9 +128,9 @@ export function Step2Identification({ initialData, onSubmit, onBack }: Step2Prop
               <FileUpload
                 bucket="signatures"
                 folder="loan-applications"
-                accept="image/*"
-                label="Signature"
-                description="Upload a clear image of your signature on white background"
+                accept="image/jpeg,image/jpg,image/png"
+                label="Signature *"
+                description="Upload a clear image of your signature on white background (JPG, PNG - max 500KB)"
                 value={field.value}
                 onChange={field.onChange}
               />

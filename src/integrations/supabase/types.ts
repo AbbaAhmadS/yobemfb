@@ -21,8 +21,13 @@ export type Database = {
           application_id: string
           bvn: string
           created_at: string
+          date_of_birth: string | null
           full_name: string
           id: string
+          local_government: string | null
+          next_of_kin_address: string | null
+          next_of_kin_name: string | null
+          next_of_kin_phone: string | null
           nin: string
           nin_document_url: string
           notes: string | null
@@ -31,10 +36,11 @@ export type Database = {
           referee1_address: string
           referee1_name: string
           referee1_phone: string
-          referee2_address: string
-          referee2_name: string
-          referee2_phone: string
+          referee2_address: string | null
+          referee2_name: string | null
+          referee2_phone: string | null
           signature_url: string
+          state: string | null
           status: Database["public"]["Enums"]["application_status"] | null
           updated_at: string
           user_id: string
@@ -45,8 +51,13 @@ export type Database = {
           application_id: string
           bvn: string
           created_at?: string
+          date_of_birth?: string | null
           full_name: string
           id?: string
+          local_government?: string | null
+          next_of_kin_address?: string | null
+          next_of_kin_name?: string | null
+          next_of_kin_phone?: string | null
           nin: string
           nin_document_url: string
           notes?: string | null
@@ -55,10 +66,11 @@ export type Database = {
           referee1_address: string
           referee1_name: string
           referee1_phone: string
-          referee2_address: string
-          referee2_name: string
-          referee2_phone: string
+          referee2_address?: string | null
+          referee2_name?: string | null
+          referee2_phone?: string | null
           signature_url: string
+          state?: string | null
           status?: Database["public"]["Enums"]["application_status"] | null
           updated_at?: string
           user_id: string
@@ -69,8 +81,13 @@ export type Database = {
           application_id?: string
           bvn?: string
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string
           id?: string
+          local_government?: string | null
+          next_of_kin_address?: string | null
+          next_of_kin_name?: string | null
+          next_of_kin_phone?: string | null
           nin?: string
           nin_document_url?: string
           notes?: string | null
@@ -79,10 +96,11 @@ export type Database = {
           referee1_address?: string
           referee1_name?: string
           referee1_phone?: string
-          referee2_address?: string
-          referee2_name?: string
-          referee2_phone?: string
+          referee2_address?: string | null
+          referee2_name?: string | null
+          referee2_phone?: string | null
           signature_url?: string
+          state?: string | null
           status?: Database["public"]["Enums"]["application_status"] | null
           updated_at?: string
           user_id?: string
@@ -595,8 +613,13 @@ export type Database = {
           application_id: string
           bvn: string
           created_at: string
+          date_of_birth: string | null
           full_name: string
           id: string
+          local_government: string | null
+          next_of_kin_address: string | null
+          next_of_kin_name: string | null
+          next_of_kin_phone: string | null
           nin: string
           nin_document_url: string
           notes: string | null
@@ -605,10 +628,11 @@ export type Database = {
           referee1_address: string
           referee1_name: string
           referee1_phone: string
-          referee2_address: string
-          referee2_name: string
-          referee2_phone: string
+          referee2_address: string | null
+          referee2_name: string | null
+          referee2_phone: string | null
           signature_url: string
+          state: string | null
           status: Database["public"]["Enums"]["application_status"] | null
           updated_at: string
           user_id: string
@@ -628,8 +652,13 @@ export type Database = {
           application_id: string
           bvn: string
           created_at: string
+          date_of_birth: string | null
           full_name: string
           id: string
+          local_government: string | null
+          next_of_kin_address: string | null
+          next_of_kin_name: string | null
+          next_of_kin_phone: string | null
           nin: string
           nin_document_url: string
           notes: string | null
@@ -638,10 +667,11 @@ export type Database = {
           referee1_address: string
           referee1_name: string
           referee1_phone: string
-          referee2_address: string
-          referee2_name: string
-          referee2_phone: string
+          referee2_address: string | null
+          referee2_name: string | null
+          referee2_phone: string | null
           signature_url: string
+          state: string | null
           status: Database["public"]["Enums"]["application_status"] | null
           updated_at: string
           user_id: string
