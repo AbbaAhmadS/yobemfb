@@ -22,6 +22,7 @@ export type Database = {
           bvn: string
           created_at: string
           date_of_birth: string | null
+          decline_reason: string | null
           full_name: string
           id: string
           local_government: string | null
@@ -52,6 +53,7 @@ export type Database = {
           bvn: string
           created_at?: string
           date_of_birth?: string | null
+          decline_reason?: string | null
           full_name: string
           id?: string
           local_government?: string | null
@@ -82,6 +84,7 @@ export type Database = {
           bvn?: string
           created_at?: string
           date_of_birth?: string | null
+          decline_reason?: string | null
           full_name?: string
           id?: string
           local_government?: string | null
@@ -219,6 +222,7 @@ export type Database = {
           address: string
           application_id: string
           application_type: Database["public"]["Enums"]["application_type"]
+          approved_amount: number | null
           audit_approval: boolean | null
           audit_approved_at: string | null
           audit_approved_by: string | null
@@ -234,6 +238,7 @@ export type Database = {
           credit_approved_at: string | null
           credit_approved_by: string | null
           current_step: number | null
+          decline_reason: string | null
           employee_id: string
           full_name: string
           id: string
@@ -259,6 +264,7 @@ export type Database = {
           address: string
           application_id: string
           application_type: Database["public"]["Enums"]["application_type"]
+          approved_amount?: number | null
           audit_approval?: boolean | null
           audit_approved_at?: string | null
           audit_approved_by?: string | null
@@ -274,6 +280,7 @@ export type Database = {
           credit_approved_at?: string | null
           credit_approved_by?: string | null
           current_step?: number | null
+          decline_reason?: string | null
           employee_id: string
           full_name: string
           id?: string
@@ -299,6 +306,7 @@ export type Database = {
           address?: string
           application_id?: string
           application_type?: Database["public"]["Enums"]["application_type"]
+          approved_amount?: number | null
           audit_approval?: boolean | null
           audit_approved_at?: string | null
           audit_approved_by?: string | null
@@ -314,6 +322,7 @@ export type Database = {
           credit_approved_at?: string | null
           credit_approved_by?: string | null
           current_step?: number | null
+          decline_reason?: string | null
           employee_id?: string
           full_name?: string
           id?: string
@@ -614,6 +623,7 @@ export type Database = {
           bvn: string
           created_at: string
           date_of_birth: string | null
+          decline_reason: string | null
           full_name: string
           id: string
           local_government: string | null
@@ -653,6 +663,7 @@ export type Database = {
           bvn: string
           created_at: string
           date_of_birth: string | null
+          decline_reason: string | null
           full_name: string
           id: string
           local_government: string | null
