@@ -41,7 +41,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <p className="text-muted-foreground">info@yobemfb.com</p>
+                  <p className="text-muted-foreground">info@yobemicrofinance.com</p>
                   <p className="text-sm text-muted-foreground">We respond within 24 hours</p>
                 </div>
               </CardContent>
@@ -56,7 +56,7 @@ export default function Contact() {
                   <h3 className="font-semibold mb-1">Office Address</h3>
                   <p className="text-muted-foreground">
                     Yobe Microfinance Bank<br />
-                    Damaturu, Yobe State<br />
+                    Plot 4, Ahmadu Bello Way, Damaturu, Yobe State<br />
                     Nigeria
                   </p>
                 </div>
@@ -72,8 +72,6 @@ export default function Contact() {
                   <h3 className="font-semibold mb-1">Working Hours</h3>
                   <p className="text-muted-foreground">
                     Monday - Friday: 8:00 AM - 5:00 PM<br />
-                    Saturday: 9:00 AM - 1:00 PM<br />
-                    Sunday: Closed
                   </p>
                 </div>
               </CardContent>
