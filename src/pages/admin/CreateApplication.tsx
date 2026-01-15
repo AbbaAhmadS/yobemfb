@@ -119,7 +119,7 @@ export default function CreateApplication() {
         allowances: guarantorData.allowances || 0,
         other_income: guarantorData.other_income || 0,
         signature_url: guarantorData.signature_url!,
-        acknowledged: guarantorData.acknowledged!,
+        acknowledged: true,
       });
 
       if (guarantorError) throw guarantorError;

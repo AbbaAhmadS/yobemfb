@@ -52,13 +52,11 @@ export function Step4Guarantor({ initialData, onSubmit, onBack }: Step4Props) {
       allowances: initialData.allowances || 0,
       other_income: initialData.other_income || 0,
       signature_url: initialData.signature_url || '',
-      acknowledged: true, // Always true now
     },
   });
 
   const handleSubmit = (data: GuarantorData) => {
-    // Ensure acknowledged is always true
-    onSubmit({ ...data, acknowledged: true });
+    onSubmit(data);
   };
 
   return (
