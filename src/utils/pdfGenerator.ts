@@ -21,6 +21,8 @@ interface ApplicationData {
   passport_photo_url?: string;
   notes?: string;
   terms_accepted?: boolean;
+  approved_amount?: number | null;
+  decline_reason?: string | null;
 }
 
 interface GuarantorData {
@@ -97,7 +99,7 @@ export async function generateApplicationPDF(
   guarantors: GuarantorData[],
   passportDataUrl?: string
 ): Promise<Blob> {
-  // Create HTML content for PDF - User version without approval chain
+  // Create HTML content for PDF - User version with approved amount and decline reason
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -122,6 +124,14 @@ export async function generateApplicationPDF(
     .guarantor-title { font-weight: bold; margin-bottom: 10px; color: #1a5d2e; }
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: white; }
     .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 20px; }
+    .approved-amount { background: #d1fae5; border: 2px solid #10b981; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; }
+    .approved-amount-label { color: #047857; font-size: 14px; margin-bottom: 5px; }
+    .approved-amount-value { color: #047857; font-size: 24px; font-weight: bold; }
+    .decline-reason { background: #fee2e2; border: 2px solid #ef4444; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .decline-reason-label { color: #b91c1c; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+    .decline-reason-text { color: #b91c1c; font-size: 12px; }
+    .sms-notice { background: #dbeafe; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; margin: 15px 0; }
+    .sms-notice-text { color: #1e40af; font-size: 11px; }
     @media print { body { padding: 20px; } }
   </style>
 </head>
@@ -143,6 +153,20 @@ export async function generateApplicationPDF(
     </div>
   </div>
 
+  ${application.approved_amount ? `
+  <div class="approved-amount">
+    <div class="approved-amount-label">✓ APPROVED LOAN AMOUNT</div>
+    <div class="approved-amount-value">${formatCurrency(application.approved_amount)}</div>
+  </div>
+  ` : ''}
+
+  ${application.status === 'declined' && application.decline_reason ? `
+  <div class="decline-reason">
+    <div class="decline-reason-label">✗ APPLICATION DECLINED</div>
+    <div class="decline-reason-text">Reason: ${application.decline_reason}</div>
+  </div>
+  ` : ''}
+
   <div class="section">
     <div class="section-title">APPLICANT INFORMATION</div>
     <div class="two-column">
@@ -160,8 +184,9 @@ export async function generateApplicationPDF(
     <div class="section-title">LOAN DETAILS</div>
     <div class="two-column">
       <div class="row"><span class="label">Loan Amount Range:</span><span class="value">${getLoanRange(application.loan_amount_range)}</span></div>
-      <div class="row"><span class="label">Specific Amount:</span><span class="value">${formatCurrency(application.specific_amount)}</span></div>
+      <div class="row"><span class="label">Requested Amount:</span><span class="value">${formatCurrency(application.specific_amount)}</span></div>
       <div class="row"><span class="label">Repayment Period:</span><span class="value">${application.repayment_period_months} months</span></div>
+      ${application.approved_amount ? `<div class="row"><span class="label">Approved Amount:</span><span class="value" style="color: #10b981; font-weight: bold;">${formatCurrency(application.approved_amount)}</span></div>` : ''}
     </div>
   </div>
 
@@ -192,6 +217,13 @@ export async function generateApplicationPDF(
         <div class="row" style="margin-top: 10px;"><span class="label">Address:</span><span class="value">${g.address}</span></div>
       </div>
     `).join('') : '<p>No guarantors on file.</p>'}
+  </div>
+
+  <div class="sms-notice">
+    <div class="sms-notice-text">
+      <strong>Important:</strong> Please login to your loan application dashboard after 24-48 hours to check your loan status. 
+      You will receive an SMS notification if your loan is approved. Loan disbursements are processed at the end of each month.
+    </div>
   </div>
 
   <div class="footer">

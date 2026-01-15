@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -8,6 +11,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   BarChart3,
   TrendingUp,
@@ -39,6 +48,7 @@ interface AnalyticsData {
     flagged: number;
     totalAmount: number;
     avgAmount: number;
+    totalApprovedAmount: number;
   };
   accountStats: {
     total: number;
@@ -59,6 +69,8 @@ export default function AnalyticsDashboard() {
   const { isAdmin, roles } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -68,7 +80,7 @@ export default function AnalyticsDashboard() {
     fetchAnalytics();
   }, [isAdmin, navigate]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (start?: Date, end?: Date) => {
     setIsLoading(true);
     try {
       const now = new Date();
@@ -76,9 +88,24 @@ export default function AnalyticsDashboard() {
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+      let loanQuery = supabase.from('loan_applications').select('*');
+      let accountQuery = supabase.from('account_applications').select('*');
+
+      // Apply date filters if provided
+      if (start) {
+        const startStr = start.toISOString();
+        loanQuery = loanQuery.gte('created_at', startStr);
+        accountQuery = accountQuery.gte('created_at', startStr);
+      }
+      if (end) {
+        const endStr = new Date(end.getTime() + 86400000).toISOString(); // Add 1 day for inclusive end
+        loanQuery = loanQuery.lte('created_at', endStr);
+        accountQuery = accountQuery.lte('created_at', endStr);
+      }
+
       const [loanRes, accountRes] = await Promise.all([
-        supabase.from('loan_applications').select('*').order('created_at', { ascending: false }),
-        supabase.from('account_applications').select('*').order('created_at', { ascending: false }),
+        loanQuery.order('created_at', { ascending: false }),
+        accountQuery.order('created_at', { ascending: false }),
       ]);
 
       if (loanRes.error) throw loanRes.error;
@@ -97,6 +124,7 @@ export default function AnalyticsDashboard() {
         flagged: loans.filter(l => l.status === 'flagged').length,
         totalAmount: loans.reduce((sum, l) => sum + (l.specific_amount || 0), 0),
         avgAmount: loans.length > 0 ? loans.reduce((sum, l) => sum + (l.specific_amount || 0), 0) / loans.length : 0,
+        totalApprovedAmount: loans.reduce((sum, l) => sum + (l.approved_amount || 0), 0),
       };
 
       // Calculate account stats
@@ -137,6 +165,16 @@ export default function AnalyticsDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDateFilter = () => {
+    fetchAnalytics(startDate, endDate);
+  };
+
+  const handleClearFilter = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+    fetchAnalytics();
   };
 
   const formatAmount = (amount: number) => {
@@ -187,7 +225,7 @@ export default function AnalyticsDashboard() {
               <p className="text-sm text-muted-foreground">Real-time application insights</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchAnalytics}>
+          <Button variant="outline" size="sm" onClick={() => fetchAnalytics(startDate, endDate)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -195,8 +233,80 @@ export default function AnalyticsDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Date Range Filter */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Filter by Date Range</CardTitle>
+            <CardDescription>Select a date range to filter analytics data</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">From:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : "Pick start date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">To:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : "Pick end date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Button onClick={handleDateFilter} disabled={!startDate && !endDate}>
+                Apply Filter
+              </Button>
+              {(startDate || endDate) && (
+                <Button variant="ghost" onClick={handleClearFilter}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Overview Stats */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
@@ -218,11 +328,24 @@ export default function AnalyticsDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">Total Loan Value</p>
-                <Banknote className="h-5 w-5 text-success" />
+                <Banknote className="h-5 w-5 text-primary" />
               </div>
               <p className="text-3xl font-bold">{formatAmount(analytics.loanStats.totalAmount)}</p>
               <p className="text-sm text-muted-foreground mt-2">
                 Avg: {formatAmount(analytics.loanStats.avgAmount)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-success/5 border-success/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">Total Approved Amount</p>
+                <CheckCircle className="h-5 w-5 text-success" />
+              </div>
+              <p className="text-3xl font-bold text-success">{formatAmount(analytics.loanStats.totalApprovedAmount)}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {analytics.loanStats.approved} approved loans
               </p>
             </CardContent>
           </Card>
@@ -420,50 +543,6 @@ export default function AnalyticsDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-display">Recent Loan Applications</CardTitle>
-            <CardDescription>Latest 10 loan applications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {analytics.loanApplications.slice(0, 10).map((app) => (
-                <div
-                  key={app.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/admin/applications/${app.id}`)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{app.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {app.application_id} • {formatAmount(app.specific_amount)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      app.status === 'approved' ? 'bg-success/10 text-success' :
-                      app.status === 'declined' ? 'bg-destructive/10 text-destructive' :
-                      app.status === 'pending' ? 'bg-warning/10 text-warning' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
-                      {app.status}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(app.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </main>
     </div>
   );
