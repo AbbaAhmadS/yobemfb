@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,13 +38,11 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-display font-bold text-lg">Y</span>
-            </div>
-            <div className="hidden sm:block">
-              <p className="font-display font-bold text-lg text-primary">YobeMFB</p>
-              <p className="text-xs text-muted-foreground -mt-1">Microfinance Bank</p>
-            </div>
+            <img 
+              src={yobemfbLogo} 
+              alt="YobeMFB Logo" 
+              className="h-12 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}
