@@ -39,6 +39,7 @@ import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS }
 import { toast } from 'sonner';
 import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 import { cn } from '@/lib/utils';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
 const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; className: string }> = {
   pending: { icon: Clock, className: 'status-pending' },
@@ -189,9 +190,11 @@ export default function CreditAdminDashboard() {
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-display font-bold text-lg">Y</span>
-            </div>
+            <img 
+              src={yobemfbLogo} 
+              alt="YobeMFB Logo" 
+              className="h-10 w-auto object-contain"
+            />
             <div>
               <h1 className="font-display font-semibold text-lg">Credit Department</h1>
               <p className="text-sm text-muted-foreground">Loan Application Management</p>
