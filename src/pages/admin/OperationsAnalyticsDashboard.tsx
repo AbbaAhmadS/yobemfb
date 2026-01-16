@@ -198,7 +198,11 @@ export default function OperationsAnalyticsDashboard() {
     });
   };
 
-  const handleStatusUpdate = async (appId: string, newStatus: 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged', reason?: string) => {
+  const handleStatusUpdate = async (
+    appId: string,
+    newStatus: 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged',
+    reason?: string
+  ) => {
     setIsUpdating(true);
     try {
       const updateData: Record<string, any> = { status: newStatus };
@@ -206,14 +210,23 @@ export default function OperationsAnalyticsDashboard() {
         updateData.decline_reason = reason;
       }
 
-      const { error } = await supabase
+      // IMPORTANT: Request the updated row back.
+      // Without this, the backend can return 204 even when 0 rows were updated (e.g. blocked by access rules).
+      const { data, error } = await supabase
         .from('account_applications')
         .update(updateData)
-        .eq('id', appId);
+        .eq('id', appId)
+        .select('id, status, updated_at')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        throw new Error('No rows were updated (permission denied or record not found).');
+      }
 
-      toast.success(`Application ${newStatus === 'approved' ? 'approved' : newStatus === 'declined' ? 'declined' : 'updated'} successfully`);
+      toast.success(
+        `Application ${newStatus === 'approved' ? 'approved' : newStatus === 'declined' ? 'declined' : 'updated'} successfully`
+      );
       fetchAnalytics();
       setSelectedApplication(null);
       setShowDeclineDialog(false);
