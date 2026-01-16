@@ -90,7 +90,7 @@ export function Step1BasicInfo({ initialData, onSubmit }: Step1Props) {
                       folder="loan-applications"
                       accept="image/jpeg,image/jpg,image/png"
                       label="Passport Photograph *"
-                      description="Upload a recent passport photograph (JPG, PNG - max 500KB). This will serve as your avatar."
+                      description="Upload a recent passport photograph (JPG, PNG - max 200KB). This will serve as your avatar."
                       value={field.value}
                       onChange={field.onChange}
                     />
