@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
 import { toast } from 'sonner';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
 type AdminRole = 'credit' | 'audit' | 'coo' | 'operations' | 'managing_director';
 
@@ -176,7 +177,11 @@ export default function AdminDashboard() {
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-card border-r p-4 flex flex-col">
         <div className="mb-8">
-          <h1 className="font-display text-xl font-bold text-primary">YobeMFB Admin</h1>
+          <img 
+            src={yobemfbLogo} 
+            alt="YobeMFB Logo" 
+            className="h-12 w-auto object-contain mb-2"
+          />
           <p className="text-sm text-muted-foreground">{getRoleLabel(role)}</p>
         </div>
 
