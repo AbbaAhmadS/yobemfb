@@ -16,8 +16,8 @@ interface FileUploadProps {
   onChange: (path: string) => void;
 }
 
-// Maximum file size: 500KB (512,000 bytes)
-const MAX_FILE_SIZE = 512000;
+// Maximum file size: 200KB (204,800 bytes)
+const MAX_FILE_SIZE = 204800;
 
 // Accepted file types - ONLY images (JPG, JPEG, PNG)
 const ACCEPTED_TYPES = [
@@ -82,9 +82,9 @@ export function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size - 500KB max
+    // Validate file size - 200KB max
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('File must be 500KB or smaller.');
+      toast.error('File too large. Maximum size is 200KB.');
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -93,7 +93,7 @@ export function FileUpload({
 
     // Validate file type - ONLY jpg, jpeg, png
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error('Only JPG and PNG images are allowed. Max 500KB.');
+      toast.error('Only JPG, JPEG, and PNG images are allowed.');
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -201,14 +201,17 @@ export function FileUpload({
           <div className="flex flex-col items-center gap-2">
             <ImageIcon className="h-10 w-10 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              {isUploading ? 'Uploading...' : 'Click to upload (max 500KB)'}
+              {isUploading ? 'Uploading...' : 'Click to upload'}
             </p>
             <p className="text-xs text-muted-foreground">
-              JPG, PNG only
+              JPG, JPEG, PNG only
             </p>
           </div>
         </div>
       )}
+      <p className="text-[10px] text-muted-foreground/70 leading-tight">
+        Scanned documents preferred. Max 200KB. If using a phone, use lower resolution or compress the file.
+      </p>
     </div>
   );
 }
