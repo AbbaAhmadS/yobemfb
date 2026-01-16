@@ -1,5 +1,5 @@
-import { Building2, Users, Target, Award } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Building2, Users, Target, Award } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function About() {
   return (
@@ -22,9 +22,8 @@ export default function About() {
               </div>
               <h2 className="font-display text-2xl font-bold mb-4">Our Mission</h2>
               <p className="text-muted-foreground">
-                To provide accessible, affordable, and reliable financial services to Yobe State 
-                civil servants, empowering them to achieve their financial goals and improve 
-                their quality of life.
+                To provide accessible, affordable, and reliable financial services to Yobe State civil servants, and
+                businesses empowering them to achieve their financial goals and improve their quality of life.
               </p>
             </CardContent>
           </Card>
@@ -35,9 +34,8 @@ export default function About() {
               </div>
               <h2 className="font-display text-2xl font-bold mb-4">Our Vision</h2>
               <p className="text-muted-foreground">
-                To be the leading microfinance institution in Yobe State, recognized for 
-                excellence in customer service, innovation, and commitment to the financial 
-                well-being of our community.
+                To be the leading financial institution in Yobe State, recognized for excellence in customer service,
+                innovation, and commitment to the financial well-being of our community.
               </p>
             </CardContent>
           </Card>
@@ -48,10 +46,10 @@ export default function About() {
           <h2 className="font-display text-3xl font-bold text-center mb-8">Our Core Values</h2>
           <div className="grid md:grid-cols-4 gap-6">
             {[
-              { title: 'Integrity', desc: 'We operate with honesty and transparency in all our dealings.' },
-              { title: 'Excellence', desc: 'We strive for the highest standards in service delivery.' },
-              { title: 'Customer Focus', desc: 'Our customers are at the heart of everything we do.' },
-              { title: 'Innovation', desc: 'We embrace technology to improve our services.' },
+              { title: "Integrity", desc: "We operate with honesty and transparency in all our dealings." },
+              { title: "Excellence", desc: "We strive for the highest standards in service delivery." },
+              { title: "Customer Focus", desc: "Our customers are at the heart of everything we do." },
+              { title: "Innovation", desc: "We embrace technology to improve our services." },
             ].map((value) => (
               <div key={value.title} className="text-center">
                 <h3 className="font-display text-lg font-semibold mb-2">{value.title}</h3>
@@ -64,10 +62,10 @@ export default function About() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { value: '20+', label: 'Years of Service' },
-            { value: '10,000+', label: 'Happy Customers' },
-            { value: '₦1B+', label: 'Loans Disbursed' },
-            { value: '98%', label: 'Customer Satisfaction' },
+            { value: "20+", label: "Years of Service" },
+            { value: "10,000+", label: "Happy Customers" },
+            { value: "₦1B+", label: "Loans Disbursed" },
+            { value: "98%", label: "Customer Satisfaction" },
           ].map((stat) => (
             <Card key={stat.label} className="card-elevated">
               <CardContent className="p-6">
