@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
+
 export function Footer() {
   return <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-12">
@@ -7,13 +9,11 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                <span className="text-secondary-foreground font-display font-bold text-lg">Y</span>
-              </div>
-              <div>
-                <p className="font-display font-bold text-lg">YobeMFB</p>
-                <p className="text-xs text-primary-foreground/70 -mt-1">Microfinance Bank</p>
-              </div>
+              <img 
+                src={yobemfbLogo} 
+                alt="YobeMFB Logo" 
+                className="h-12 w-auto object-contain rounded-lg bg-white p-1"
+              />
             </div>
             <p className="text-sm text-primary-foreground/80">
               Empowering Yobe State civil servants with accessible and affordable loan solutions for over 20 years.

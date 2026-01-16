@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -179,9 +179,11 @@ export default function Auth() {
 
         <Card className="border-0 shadow-lg">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto h-14 w-14 rounded-xl bg-primary flex items-center justify-center mb-4">
-              <span className="text-primary-foreground font-display font-bold text-2xl">Y</span>
-            </div>
+            <img 
+              src={yobemfbLogo} 
+              alt="YobeMFB Logo" 
+              className="mx-auto h-16 w-auto object-contain mb-4"
+            />
             <CardTitle className="font-display text-2xl">
               {isSignup ? 'Create Account' : 'Welcome Back'}
             </CardTitle>
