@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
 
 interface FileUploadProps {
   bucket?: string;
@@ -25,6 +26,14 @@ const ACCEPTED_TYPES = [
   'image/jpg',
   'image/png',
 ];
+
+// Compression options
+const compressionOptions = {
+  maxSizeMB: 0.19, // Target ~195KB to stay under 200KB
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+  fileType: 'image/jpeg' as const,
+};
 
 export function FileUpload({
   bucket = 'loan-uploads',
@@ -82,15 +91,6 @@ export function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size - 200KB max
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error('File too large. Maximum size is 200KB.');
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
-      return;
-    }
-
     // Validate file type - ONLY jpg, jpeg, png
     if (!ACCEPTED_TYPES.includes(file.type)) {
       toast.error('Only JPG, JPEG, and PNG images are allowed.');
@@ -102,9 +102,40 @@ export function FileUpload({
 
     setIsUploading(true);
 
+    let fileToUpload: File = file;
+
+    // Auto-compress if file is larger than 200KB
+    if (file.size > MAX_FILE_SIZE) {
+      try {
+        toast.info('Compressing image...');
+        const compressedFile = await imageCompression(file, compressionOptions);
+        
+        // Check if compression brought it under limit
+        if (compressedFile.size > MAX_FILE_SIZE) {
+          toast.error('File still too large after compression. Please use a smaller image.');
+          if (inputRef.current) {
+            inputRef.current.value = '';
+          }
+          setIsUploading(false);
+          return;
+        }
+        
+        fileToUpload = compressedFile;
+        toast.success('Image compressed successfully');
+      } catch (compressionError) {
+        console.error('Compression error:', compressionError);
+        toast.error('Failed to compress image. Please use a smaller file.');
+        if (inputRef.current) {
+          inputRef.current.value = '';
+        }
+        setIsUploading(false);
+        return;
+      }
+    }
+
     try {
       // Generate unique filename with organized folder structure
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileExt = fileToUpload.name.split('.').pop()?.toLowerCase() || 'jpg';
       const basePath = applicationId
         ? `uploads/loan-applications/${applicationId}`
         : folder;
@@ -113,7 +144,7 @@ export function FileUpload({
       // Upload to storage
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file, {
+        .upload(fileName, fileToUpload, {
           cacheControl: '3600',
           upsert: false,
         });
