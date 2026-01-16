@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -89,9 +90,11 @@ export default function AdminLogin() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/10 p-4">
       <Card className="w-full max-w-md card-elevated">
         <CardHeader className="text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Shield className="h-8 w-8 text-primary" />
-          </div>
+          <img 
+            src={yobemfbLogo} 
+            alt="YobeMFB Logo" 
+            className="mx-auto h-16 w-auto object-contain mb-4"
+          />
           <CardTitle className="font-display text-2xl">Admin Portal</CardTitle>
           <CardDescription>Yobe Microfinance Bank Staff Login</CardDescription>
         </CardHeader>

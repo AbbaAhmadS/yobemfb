@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
@@ -50,13 +51,11 @@ export function DashboardLayout() {
           {/* Logo */}
           <div className="p-4 border-b border-sidebar-border">
             <Link to="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                <span className="text-sidebar-primary-foreground font-display font-bold text-lg">Y</span>
-              </div>
-              <div>
-                <p className="font-display font-bold">YobeMFB</p>
-                <p className="text-xs text-sidebar-foreground/70">Microfinance Bank</p>
-              </div>
+              <img 
+                src={yobemfbLogo} 
+                alt="YobeMFB Logo" 
+                className="h-10 w-auto object-contain"
+              />
             </Link>
           </div>
 
