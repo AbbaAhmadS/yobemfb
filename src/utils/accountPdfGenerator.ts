@@ -58,14 +58,43 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
       padding: 40px;
     }
     .container { max-width: 800px; margin: 0 auto; }
+    .letterhead {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #1a5d2e;
+    }
+    .letterhead-info { text-align: center; }
+    .letterhead-info h1 { 
+      color: #1a5d2e; 
+      font-size: 22px; 
+      margin-bottom: 3px; 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
+    .letterhead-info p { color: #666; font-size: 11px; margin: 2px 0; }
+    .letterhead-contact {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 5px;
+      font-size: 10px;
+      color: #444;
+    }
     .header {
       text-align: center;
-      border-bottom: 3px solid #1a365d;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
-    .logo { font-size: 28px; font-weight: bold; color: #1a365d; }
-    .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+    .header h2 {
+      color: #1a5d2e;
+      font-size: 18px;
+      font-weight: bold;
+      text-decoration: underline;
+      margin-top: 10px;
+    }
     .app-id {
       background: #f0f4f8;
       padding: 15px;
@@ -74,7 +103,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
       margin: 20px 0;
     }
     .app-id-label { font-size: 12px; color: #666; text-transform: uppercase; }
-    .app-id-value { font-size: 24px; font-weight: bold; color: #1a365d; font-family: monospace; }
+    .app-id-value { font-size: 24px; font-weight: bold; color: #1a5d2e; font-family: monospace; }
     .passport-section {
       display: flex;
       justify-content: center;
@@ -84,7 +113,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
       width: 150px;
       height: 150px;
       border-radius: 8px;
-      border: 3px solid #1a365d;
+      border: 3px solid #1a5d2e;
       object-fit: cover;
     }
     .section {
@@ -92,7 +121,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
       page-break-inside: avoid;
     }
     .section-title {
-      background: #1a365d;
+      background: #1a5d2e;
       color: white;
       padding: 10px 15px;
       font-size: 14px;
@@ -123,7 +152,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
     .footer {
       margin-top: 40px;
       padding-top: 20px;
-      border-top: 1px solid #ddd;
+      border-top: 2px solid #1a5d2e;
       text-align: center;
       color: #666;
       font-size: 12px;
@@ -136,9 +165,20 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
 </head>
 <body>
   <div class="container">
+    <!-- Professional Letterhead -->
+    <div class="letterhead">
+      <div class="letterhead-info">
+        <h1>Yobe Microfinance Bank Limited</h1>
+        <p>RC: 1234567 | Licensed by Central Bank of Nigeria</p>
+        <div class="letterhead-contact">
+          <span>📍 Yobe State, Nigeria</span>
+          <span>📞 08142576613</span>
+        </div>
+      </div>
+    </div>
+
     <div class="header">
-      <div class="logo">Yobe Microfinance Bank</div>
-      <div class="subtitle">Account Opening Application Form</div>
+      <h2>ACCOUNT OPENING APPLICATION FORM</h2>
     </div>
 
     <div class="app-id">
@@ -148,7 +188,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
 
     <div class="passport-section">
       <div style="text-align: center;">
-        <div style="width: 150px; height: 150px; background: #f0f4f8; border-radius: 8px; border: 3px solid #1a365d; display: flex; align-items: center; justify-content: center;">
+        <div style="width: 150px; height: 150px; background: #f0f4f8; border-radius: 8px; border: 3px solid #1a5d2e; display: flex; align-items: center; justify-content: center;">
           <span style="color: #666; font-size: 12px;">Passport Photo</span>
         </div>
       </div>
@@ -228,6 +268,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
     </div>
 
     <div class="footer">
+      <p><strong>Yobe Microfinance Bank Limited</strong></p>
       <p>Generated on ${new Date().toLocaleDateString('en-NG', { 
         year: 'numeric', 
         month: 'long', 
@@ -235,7 +276,8 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
         hour: '2-digit',
         minute: '2-digit'
       })}</p>
-      <p style="margin-top: 10px;">Yobe Microfinance Bank - Building Financial Futures</p>
+      <p style="margin-top: 5px;">Licensed by Central Bank of Nigeria | All Rights Reserved</p>
+      <p>This is a computer-generated document and does not require a signature.</p>
     </div>
   </div>
 </body>
