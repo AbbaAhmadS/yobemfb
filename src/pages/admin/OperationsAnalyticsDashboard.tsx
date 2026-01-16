@@ -41,6 +41,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
 interface AccountApplication {
   id: string;
@@ -300,9 +301,13 @@ export default function OperationsAnalyticsDashboard() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
+            <img 
+              src={yobemfbLogo} 
+              alt="YobeMFB Logo" 
+              className="h-10 w-auto object-contain"
+            />
             <div>
               <h1 className="font-display font-semibold text-lg flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
                 Account Opening Department Dashboard
               </h1>
               <p className="text-sm text-muted-foreground">Account opening applications management</p>

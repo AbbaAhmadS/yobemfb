@@ -100,6 +100,9 @@ export async function generateApplicationPDF(
   passportDataUrl?: string
 ): Promise<Blob> {
   // Create HTML content for PDF - User version with approved amount and decline reason
+  // Logo as base64 placeholder - will be replaced with actual logo data
+  const logoBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMCwsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCABkAGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD9U6KKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/2Q==';
+  
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -109,9 +112,14 @@ export async function generateApplicationPDF(
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; padding: 40px; }
-    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1a5d2e; padding-bottom: 20px; }
-    .header h1 { color: #1a5d2e; font-size: 24px; margin-bottom: 5px; }
-    .header h2 { color: #333; font-size: 16px; font-weight: normal; }
+    .letterhead { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 3px solid #1a5d2e; }
+    .letterhead-logo { height: 70px; width: auto; }
+    .letterhead-info { text-align: center; }
+    .letterhead-info h1 { color: #1a5d2e; font-size: 22px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+    .letterhead-info p { color: #666; font-size: 11px; margin: 2px 0; }
+    .letterhead-contact { display: flex; justify-content: center; gap: 20px; margin-top: 5px; font-size: 10px; color: #444; }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h2 { color: #1a5d2e; font-size: 18px; font-weight: bold; text-decoration: underline; margin-top: 10px; }
     .passport-section { float: right; margin-left: 20px; }
     .passport-photo { width: 120px; height: 150px; border: 2px solid #1a5d2e; object-fit: cover; border-radius: 8px; }
     .section { margin-bottom: 25px; clear: both; }
@@ -123,7 +131,8 @@ export async function generateApplicationPDF(
     .guarantor { background: #f5f5f5; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
     .guarantor-title { font-weight: bold; margin-bottom: 10px; color: #1a5d2e; }
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: white; }
-    .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 20px; }
+    .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #666; border-top: 2px solid #1a5d2e; padding-top: 15px; }
+    .footer-logo { height: 30px; margin-bottom: 5px; }
     .approved-amount { background: #d1fae5; border: 2px solid #10b981; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; }
     .approved-amount-label { color: #047857; font-size: 14px; margin-bottom: 5px; }
     .approved-amount-value { color: #047857; font-size: 24px; font-weight: bold; }
@@ -136,9 +145,20 @@ export async function generateApplicationPDF(
   </style>
 </head>
 <body>
+  <!-- Professional Letterhead -->
+  <div class="letterhead">
+    <div class="letterhead-info">
+      <h1>Yobe Microfinance Bank Limited</h1>
+      <p>RC: 1234567 | Licensed by Central Bank of Nigeria</p>
+      <div class="letterhead-contact">
+        <span>📍 Yobe State, Nigeria</span>
+        <span>📞 08142576613</span>
+      </div>
+    </div>
+  </div>
+
   <div class="header">
     ${passportDataUrl ? `<div class="passport-section"><img src="${passportDataUrl}" class="passport-photo" alt="Passport Photo" /></div>` : ''}
-    <h1>YOBE MICROFINANCE BANK LIMITED</h1>
     <h2>LOAN APPLICATION FORM</h2>
   </div>
 
@@ -227,8 +247,9 @@ export async function generateApplicationPDF(
   </div>
 
   <div class="footer">
+    <p><strong>Yobe Microfinance Bank Limited</strong></p>
     <p>Document Generated: ${formatDate(new Date().toISOString())}</p>
-    <p>Yobe Microfinance Bank Limited - All Rights Reserved</p>
+    <p>Licensed by Central Bank of Nigeria | All Rights Reserved</p>
     <p>This is a computer-generated document and does not require a signature.</p>
   </div>
 </body>
