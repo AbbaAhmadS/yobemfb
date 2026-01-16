@@ -92,7 +92,7 @@ export function Step2Identification({ initialData, onSubmit, onBack }: Step2Prop
                 folder="nin-documents"
                 accept="image/jpeg,image/jpg,image/png"
                 label="NIN Slip / National ID Card *"
-                description="Upload a clear image of your NIN document (JPG, PNG - max 500KB)"
+                description="Upload a clear image of your NIN document (JPG, PNG - max 200KB)"
                 value={field.value}
                 onChange={field.onChange}
               />
@@ -111,7 +111,7 @@ export function Step2Identification({ initialData, onSubmit, onBack }: Step2Prop
                 folder="payment-slips"
                 accept="image/jpeg,image/jpg,image/png"
                 label="Recent Payment Slip / Salary Advice *"
-                description="Upload your most recent salary payment slip (JPG, PNG - max 500KB)"
+                description="Upload your most recent salary payment slip (JPG, PNG - max 200KB)"
                 value={field.value}
                 onChange={field.onChange}
               />
@@ -130,7 +130,7 @@ export function Step2Identification({ initialData, onSubmit, onBack }: Step2Prop
                 folder="loan-applications"
                 accept="image/jpeg,image/jpg,image/png"
                 label="Signature *"
-                description="Upload a clear image of your signature on white background (JPG, PNG - max 500KB)"
+                description="Upload a clear image of your signature on white background (JPG, PNG - max 200KB)"
                 value={field.value}
                 onChange={field.onChange}
               />

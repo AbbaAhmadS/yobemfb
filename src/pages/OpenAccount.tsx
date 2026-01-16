@@ -348,7 +348,7 @@ export default function OpenAccount() {
                         folder="account-applications"
                         accept="image/jpeg,image/jpg,image/png"
                         label="Passport Photograph *"
-                        description="Upload a recent passport photograph (JPG, PNG - max 500KB)"
+                        description="Upload a recent passport photograph (JPG, PNG - max 200KB)"
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -505,7 +505,7 @@ export default function OpenAccount() {
                           folder="account-nin"
                           accept="image/jpeg,image/jpg,image/png"
                           label="NIN Slip / National ID Upload *"
-                          description="Upload your NIN document (JPG, PNG - max 500KB)"
+                          description="Upload your NIN document (JPG, PNG - max 200KB)"
                           value={field.value}
                           onChange={field.onChange}
                         />
@@ -579,7 +579,7 @@ export default function OpenAccount() {
                         folder="account-signatures"
                         accept="image/jpeg,image/jpg,image/png"
                         label="Upload Your Signature *"
-                        description="Sign on white paper and upload (JPG, PNG - max 500KB)"
+                        description="Sign on white paper and upload (JPG, PNG - max 200KB)"
                         value={field.value}
                         onChange={field.onChange}
                       />

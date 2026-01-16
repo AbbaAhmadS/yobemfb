@@ -169,7 +169,7 @@ export const generateAccountApplicationPdf = (data: AccountApplicationData) => {
     <div class="letterhead">
       <div class="letterhead-info">
         <h1>Yobe Microfinance Bank Limited</h1>
-        <p>RC: 1234567 | Licensed by Central Bank of Nigeria</p>
+        <p>Licensed by Central Bank of Nigeria</p>
         <div class="letterhead-contact">
           <span>📍 Yobe State, Nigeria</span>
           <span>📞 08142576613</span>
