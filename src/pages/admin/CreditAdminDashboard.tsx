@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
+import { LoanApplication, ApplicationStatus, STATUS_LABELS, getSolarProductName } from '@/types/database';
 import { toast } from 'sonner';
 import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 import { cn } from '@/lib/utils';
@@ -197,7 +197,7 @@ export default function CreditAdminDashboard() {
             />
             <div>
               <h1 className="font-display font-semibold text-lg">Credit Department</h1>
-              <p className="text-sm text-muted-foreground">Loan Application Management</p>
+              <p className="text-sm text-muted-foreground">Solar Loan Application Management</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -334,7 +334,7 @@ export default function CreditAdminDashboard() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{formatAmount(stats.totalLoanValue)}</p>
-                  <p className="text-sm text-muted-foreground">Total Loan Value</p>
+                  <p className="text-sm text-muted-foreground">Total Solar Value</p>
                 </div>
               </div>
             </CardContent>
@@ -376,8 +376,8 @@ export default function CreditAdminDashboard() {
         {/* Applications */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Loan Applications</CardTitle>
-            <CardDescription>Review and manage loan applications</CardDescription>
+            <CardTitle className="font-display">Solar Loan Applications</CardTitle>
+            <CardDescription>Review and manage solar loan applications</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="all">
@@ -410,7 +410,7 @@ export default function CreditAdminDashboard() {
                               <div>
                                 <p className="font-medium">{app.full_name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {app.application_id} • {formatAmount(app.specific_amount)} • {formatDate(app.created_at)}
+                                  {app.application_id} • {getSolarProductName(app.product_type)} • {formatDate(app.created_at)}
                                 </p>
                               </div>
                             </div>

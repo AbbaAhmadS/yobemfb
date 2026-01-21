@@ -310,7 +310,7 @@ export default function AnalyticsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Total Loan Applications</p>
+                <p className="text-sm text-muted-foreground">Total Solar Applications</p>
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <p className="text-3xl font-bold">{analytics.loanStats.total}</p>
@@ -327,7 +327,7 @@ export default function AnalyticsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Total Loan Value</p>
+                <p className="text-sm text-muted-foreground">Total Solar Value</p>
                 <Banknote className="h-5 w-5 text-primary" />
               </div>
               <p className="text-3xl font-bold">{formatAmount(analytics.loanStats.totalAmount)}</p>
@@ -340,12 +340,12 @@ export default function AnalyticsDashboard() {
           <Card className="bg-success/5 border-success/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Total Approved Amount</p>
+                <p className="text-sm text-muted-foreground">Approved Solar Loans</p>
                 <CheckCircle className="h-5 w-5 text-success" />
               </div>
-              <p className="text-3xl font-bold text-success">{formatAmount(analytics.loanStats.totalApprovedAmount)}</p>
+              <p className="text-3xl font-bold text-success">{analytics.loanStats.approved}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                {analytics.loanStats.approved} approved loans
+                Value: {formatAmount(analytics.loanStats.totalAmount * (analytics.loanStats.approved / (analytics.loanStats.total || 1)))}
               </p>
             </CardContent>
           </Card>
@@ -362,7 +362,7 @@ export default function AnalyticsDashboard() {
                   : 0}%
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                {analytics.loanStats.approved} of {analytics.loanStats.total} approved
+                {analytics.loanStats.approved} of {analytics.loanStats.total} solar loans
               </p>
             </CardContent>
           </Card>

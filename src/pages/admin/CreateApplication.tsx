@@ -143,9 +143,9 @@ export default function CreateApplication() {
             <div className="mx-auto h-20 w-20 rounded-full bg-success/10 flex items-center justify-center mb-4">
               <CheckCircle className="h-10 w-10 text-success" />
             </div>
-            <CardTitle className="font-display text-2xl">Application Submitted!</CardTitle>
+            <CardTitle className="font-display text-2xl">Solar Loan Application Submitted!</CardTitle>
             <CardDescription className="text-base">
-              Customer loan application has been successfully submitted.
+              Customer solar loan application has been successfully submitted.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -184,8 +184,8 @@ export default function CreateApplication() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="font-display text-2xl font-bold">Customer Loan Application</h1>
-          <p className="text-muted-foreground">Create application on behalf of a customer</p>
+          <h1 className="font-display text-2xl font-bold">Customer Solar Loan Application</h1>
+          <p className="text-muted-foreground">Create solar loan application on behalf of a customer</p>
         </div>
       </div>
 

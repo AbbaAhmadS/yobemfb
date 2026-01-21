@@ -40,7 +40,8 @@ import {
   ApplicationStatus, 
   AppRole,
   STATUS_LABELS,
-  LOAN_AMOUNT_LABELS
+  getSolarProductName,
+  getSolarProductPrice
 } from '@/types/database';
 import { toast } from 'sonner';
 import { SignedImage } from '@/components/ui/signed-image';
@@ -507,26 +508,22 @@ export default function ApplicationDetail() {
               </CardContent>
             </Card>
 
-            {/* Loan Details */}
-            <Card>
+            {/* Solar Product Details */}
+            <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  Loan Details
+                  Solar Product Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Product Type:</span>
-                  <p className="font-medium capitalize">{application.product_type.replace('_', ' ')} Loan</p>
+                  <span className="text-muted-foreground">Solar Product:</span>
+                  <p className="font-medium text-primary text-lg">{getSolarProductName(application.product_type)}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Amount Range:</span>
-                  <p className="font-medium">{LOAN_AMOUNT_LABELS[application.loan_amount_range]}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Requested Amount:</span>
-                  <p className="font-medium text-lg text-primary">{formatAmount(application.specific_amount)}</p>
+                  <span className="text-muted-foreground">Product Price:</span>
+                  <p className="font-medium text-lg">{formatAmount(getSolarProductPrice(application.product_type))}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Repayment Period:</span>
@@ -540,17 +537,6 @@ export default function ApplicationDetail() {
                   <span className="text-muted-foreground">YobeMFB Account Number:</span>
                   <p className="font-medium">{application.bank_account_number}</p>
                 </div>
-                
-                {/* Approved Amount - Display in green if set */}
-                {application.approved_amount && (
-                  <div className="col-span-2 p-4 rounded-lg bg-success/10 border border-success/30">
-                    <div className="flex items-center gap-2">
-                      <Banknote className="h-5 w-5 text-success" />
-                      <span className="text-muted-foreground">Approved Amount:</span>
-                    </div>
-                    <p className="font-bold text-2xl text-success mt-1">{formatAmount(application.approved_amount)}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
