@@ -27,7 +27,7 @@ export default function Index() {
     {
       icon: Shield,
       title: 'Secure & Affordable',
-      description: 'Flexible repayment options over 9 or 12 months. Your financial information is protected with bank-grade security.',
+      description: 'Flexible repayment options over 12 or 24 months. Your financial information is protected with bank-grade security.',
     },
     {
       icon: Users,
