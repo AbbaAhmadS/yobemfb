@@ -137,7 +137,7 @@ export default function Index() {
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               Yobe Microfinance Bank offers affordable solar loan solutions 
-              exclusively for Yobe State civil servants. Get a complete solar system today and pay over 9 or 12 months.
+              exclusively for Yobe State and Local Governments Civil Servants. Get a complete solar system today and pay over 12 or 24 months.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <Button size="lg" asChild className="text-lg px-8">
@@ -246,7 +246,7 @@ export default function Index() {
                       <span className="text-primary-foreground/80 text-sm font-medium">Total Price</span>
                       <span className="text-3xl font-bold text-primary-foreground">{product.price}</span>
                     </div>
-                    <p className="text-primary-foreground/70 text-sm mt-1">Flexible repayment over 9 or 12 months</p>
+                    <p className="text-primary-foreground/70 text-sm mt-1">Flexible repayment over 12 or 24 months</p>
                   </div>
 
                   {/* Specifications */}

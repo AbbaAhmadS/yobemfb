@@ -29,7 +29,7 @@ const step3Schema = z.object({
   product_type: z.enum(['short_term', 'long_term']),
   loan_amount_range: z.enum(['100k_300k', '300k_600k', '600k_1m', 'above_1m']),
   specific_amount: z.number().min(100000, 'Minimum amount is ₦100,000'),
-  repayment_period_months: z.number().min(9).max(12),
+  repayment_period_months: z.number().min(12).max(24),
   bank_name: z.enum(['savings', 'current', 'corporate']),
   bank_account_number: z.string().length(10, 'Account number must be 10 digits'),
 });
@@ -192,8 +192,8 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="9">9 Months</SelectItem>
                   <SelectItem value="12">12 Months</SelectItem>
+                  <SelectItem value="24">24 Months</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>
