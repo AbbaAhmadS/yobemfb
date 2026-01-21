@@ -23,14 +23,12 @@ function generateAdminPDFHTML(application: any, guarantors: any[], passportPhoto
     }).format(amount);
   };
 
-  const getLoanRange = (range: string) => {
-    const ranges: Record<string, string> = {
-      '100k_300k': '₦100,000 - ₦300,000',
-      '300k_600k': '₦300,000 - ₦600,000',
-      '600k_1m': '₦600,000 - ₦1,000,000',
-      'above_1m': 'Above ₦1,000,000'
+  const getSolarProductName = (productType: string) => {
+    const products: Record<string, string> = {
+      'short_term': 'Easy Solar Combo (1.2Kwh) - ₦790,000',
+      'long_term': 'Smart Solar Combo (2.6Kwh) - ₦950,000'
     };
-    return ranges[range] || range;
+    return products[productType] || productType;
   };
 
   const getAccountType = (type: string) => {
@@ -99,7 +97,7 @@ function generateAdminPDFHTML(application: any, guarantors: any[], passportPhoto
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loan Application - ${application.application_id}</title>
+  <title>Solar Loan Application - ${application.application_id}</title>
   <style>
     * {
       margin: 0;
@@ -275,7 +273,7 @@ function generateAdminPDFHTML(application: any, guarantors: any[], passportPhoto
   <div class="container">
     <div class="header">
       <h1>YOBE MICROFINANCE BANK LIMITED</h1>
-      <h2>LOAN APPLICATION FORM (ADMIN COPY)</h2>
+      <h2>SOLAR LOAN APPLICATION FORM (ADMIN COPY)</h2>
     </div>
 
     <div class="applicant-header">
@@ -309,11 +307,10 @@ function generateAdminPDFHTML(application: any, guarantors: any[], passportPhoto
     </div>
 
     <div class="section">
-      <h3>Loan Details</h3>
+      <h3>Solar Product Details</h3>
       <table>
-        <tr><td class="label">Product Type:</td><td>${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}</td></tr>
-        <tr><td class="label">Loan Amount Range:</td><td>${getLoanRange(application.loan_amount_range)}</td></tr>
-        <tr><td class="label">Specific Amount:</td><td>${formatCurrency(application.specific_amount)}</td></tr>
+        <tr><td class="label">Solar Product:</td><td>${getSolarProductName(application.product_type)}</td></tr>
+        <tr><td class="label">Product Price:</td><td>${formatCurrency(application.specific_amount)}</td></tr>
         <tr><td class="label">Repayment Period:</td><td>${application.repayment_period_months} months</td></tr>
       </table>
     </div>

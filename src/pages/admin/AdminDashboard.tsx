@@ -11,7 +11,7 @@ import {
   LayoutDashboard, FileText, Users, LogOut, Moon, Sun,
   CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard, BarChart3
 } from 'lucide-react';
-import { LoanApplication, ApplicationStatus, STATUS_LABELS, LOAN_AMOUNT_LABELS } from '@/types/database';
+import { LoanApplication, ApplicationStatus, STATUS_LABELS, getSolarProductName } from '@/types/database';
 import { toast } from 'sonner';
 import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
@@ -299,7 +299,7 @@ export default function AdminDashboard() {
         {/* Recent Applications */}
         <Card className="card-elevated">
           <CardHeader>
-            <CardTitle>Recent Applications</CardTitle>
+            <CardTitle>Recent Solar Loan Applications</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
                       <div>
                         <p className="font-medium">{app.full_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {app.application_id} • {formatAmount(app.specific_amount)} • {formatDate(app.created_at)}
+                          {app.application_id} • {getSolarProductName(app.product_type)} • {formatDate(app.created_at)}
                         </p>
                       </div>
                     </div>
