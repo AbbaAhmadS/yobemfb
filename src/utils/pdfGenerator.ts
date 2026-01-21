@@ -53,14 +53,12 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function getLoanRange(range: string): string {
-  const ranges: Record<string, string> = {
-    '100k_300k': '₦100,000 - ₦300,000',
-    '300k_600k': '₦300,000 - ₦600,000',
-    '600k_1m': '₦600,000 - ₦1,000,000',
-    'above_1m': 'Above ₦1,000,000'
+function getSolarProductName(productType: string): string {
+  const products: Record<string, string> = {
+    'short_term': 'Easy Solar Combo (1.2Kwh) - ₦790,000',
+    'long_term': 'Smart Solar Combo (2.6Kwh) - ₦950,000'
   };
-  return ranges[range] || range;
+  return products[productType] || productType;
 }
 
 function getAccountType(type: string): string {
@@ -108,7 +106,7 @@ export async function generateApplicationPDF(
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Loan Application - ${application.application_id}</title>
+  <title>Solar Loan Application - ${application.application_id}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; padding: 40px; }
@@ -159,7 +157,7 @@ export async function generateApplicationPDF(
 
   <div class="header">
     ${passportDataUrl ? `<div class="passport-section"><img src="${passportDataUrl}" class="passport-photo" alt="Passport Photo" /></div>` : ''}
-    <h2>LOAN APPLICATION FORM</h2>
+    <h2>SOLAR LOAN APPLICATION FORM</h2>
   </div>
 
   <div class="section">
@@ -169,7 +167,7 @@ export async function generateApplicationPDF(
       <div class="row"><span class="label">Date:</span><span class="value">${formatDate(application.created_at)}</span></div>
       <div class="row"><span class="label">Approval Status:</span><span class="value"><span class="status-badge" style="background: ${getStatusColor(application.status)}">${getStatusLabel(application.status)}</span></span></div>
       <div class="row"><span class="label">Application Type:</span><span class="value">${application.application_type?.toUpperCase()}</span></div>
-      <div class="row"><span class="label">Product Type:</span><span class="value">${application.product_type === 'short_term' ? 'Short Term Loan' : 'Long Term Loan'}</span></div>
+      <div class="row"><span class="label">Solar Product:</span><span class="value">${getSolarProductName(application.product_type)}</span></div>
     </div>
   </div>
 
@@ -201,12 +199,11 @@ export async function generateApplicationPDF(
   </div>
 
   <div class="section">
-    <div class="section-title">LOAN DETAILS</div>
+    <div class="section-title">SOLAR PRODUCT DETAILS</div>
     <div class="two-column">
-      <div class="row"><span class="label">Loan Amount Range:</span><span class="value">${getLoanRange(application.loan_amount_range)}</span></div>
-      <div class="row"><span class="label">Requested Amount:</span><span class="value">${formatCurrency(application.specific_amount)}</span></div>
+      <div class="row"><span class="label">Solar Product:</span><span class="value">${getSolarProductName(application.product_type)}</span></div>
+      <div class="row"><span class="label">Product Price:</span><span class="value">${formatCurrency(application.specific_amount)}</span></div>
       <div class="row"><span class="label">Repayment Period:</span><span class="value">${application.repayment_period_months} months</span></div>
-      ${application.approved_amount ? `<div class="row"><span class="label">Approved Amount:</span><span class="value" style="color: #10b981; font-weight: bold;">${formatCurrency(application.approved_amount)}</span></div>` : ''}
     </div>
   </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Clock, Users, CheckCircle, Banknote, FileText, MessageCircle, Bot, Sparkles } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Users, CheckCircle, Sun, Zap, FileText, MessageCircle, Bot, Sparkles, Battery, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -18,14 +18,14 @@ export default function Index() {
 
   const features = [
     {
-      icon: Clock,
-      title: 'Quick Processing',
-      description: 'Loans are processed and disbursed at the last week of every month to match salary payment timing.',
+      icon: Sun,
+      title: 'Clean Energy',
+      description: 'Power your home with reliable solar energy. Reduce your carbon footprint and enjoy uninterrupted power supply.',
     },
     {
       icon: Shield,
-      title: 'Secure & Private',
-      description: 'Your personal and financial information is protected with bank-grade security.',
+      title: 'Secure & Affordable',
+      description: 'Flexible repayment options over 9 or 12 months. Your financial information is protected with bank-grade security.',
     },
     {
       icon: Users,
@@ -34,23 +34,29 @@ export default function Index() {
     },
   ];
 
-  const loanTypes = [
+  const solarProducts = [
     {
-      title: 'Short Term Loans',
-      description: 'Perfect for immediate needs with flexible repayment periods.',
-      features: ['Quick approval', '3-12 months tenure'],
+      title: 'Easy Solar Combo',
+      capacity: '1.2Kwh',
+      price: '₦790,000',
+      description: 'Perfect for small households with basic power needs.',
+      features: ['Complete solar system', 'Professional installation', '9 or 12 months repayment', 'Warranty included'],
+      recommended: false,
     },
     {
-      title: 'Long Term Loans',
-      description: 'For major investments and long-term financial goals.',
-      features: ['Higher amounts', 'Extended tenure'],
+      title: 'Smart Solar Combo',
+      capacity: '2.6Kwh',
+      price: '₦950,000',
+      description: 'Ideal for larger households with higher power requirements.',
+      features: ['Complete solar system', 'Professional installation', '9 or 12 months repayment', 'Warranty included', 'Higher capacity'],
+      recommended: true,
     },
   ];
 
   const steps = [
     { icon: FileText, title: 'Apply Online', description: 'Fill out our simple application form' },
     { icon: CheckCircle, title: 'Get Approved', description: 'Quick review by our team' },
-    { icon: Banknote, title: 'Receive Funds', description: 'Money credited to your account' },
+    { icon: Sun, title: 'Receive Your Solar', description: 'Solar system installed at your home' },
   ];
 
   return (
@@ -72,7 +78,7 @@ export default function Index() {
               <div>
                 <p className="font-medium text-sm mb-1">Hi there! 👋</p>
                 <p className="text-xs text-muted-foreground">
-                  Need help with loans? I'm available 24/7 to answer your questions!
+                  Need help with solar loans? I'm available 24/7 to answer your questions!
                 </p>
               </div>
             </div>
@@ -92,21 +98,21 @@ export default function Index() {
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-secondary/20 text-secondary-foreground px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-in">
-              <Shield className="h-4 w-4" />
-              Trusted by Yobe State Civil Servants
+              <Sun className="h-4 w-4" />
+              Solar Loan Solutions for Yobe State Civil Servants
             </div>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-slide-up">
-              Access Affordable Loans{' '}
-              <span className="text-primary">Designed for You</span>
+              Power Your Home with{' '}
+              <span className="text-primary">Solar Energy</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Yobe Microfinance Bank offers quick, secure, and affordable loan solutions 
-              exclusively for Yobe State civil servants. Apply online today — loans are disbursed at the last week of every month.
+              Yobe Microfinance Bank offers affordable solar loan solutions 
+              exclusively for Yobe State civil servants. Get a complete solar system today and pay over 9 or 12 months.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <Button size="lg" asChild className="text-lg px-8">
                 <Link to="/auth?mode=signup">
-                  Apply for Loan
+                  Apply for Solar Loan
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -127,9 +133,9 @@ export default function Index() {
                 <MessageCircle className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <p className="font-display font-semibold text-lg">24/7 AI Loan Assistant</p>
+                <p className="font-display font-semibold text-lg">24/7 AI Solar Loan Assistant</p>
                 <p className="text-sm text-muted-foreground">
-                  Get instant answers to your loan questions anytime, anywhere
+                  Get instant answers to your solar loan questions anytime, anywhere
                 </p>
               </div>
             </div>
@@ -163,26 +169,38 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Loan Types */}
+      {/* Solar Products */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Our Loan Products</h2>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Our Solar Products</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose the loan product that best fits your needs with competitive interest rates.
+              Choose the solar package that best fits your household needs. Both options come with professional installation and warranty.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {loanTypes.map((loan, index) => (
-              <Card key={loan.title} className="card-elevated overflow-hidden group hover:border-primary/50 transition-colors">
+            {solarProducts.map((product) => (
+              <Card key={product.title} className={`card-elevated overflow-hidden group hover:border-primary/50 transition-colors relative ${product.recommended ? 'ring-2 ring-primary' : ''}`}>
+                {product.recommended && (
+                  <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                    Recommended
+                  </div>
+                )}
                 <CardContent className="p-0">
                   <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground">
-                    <h3 className="font-display text-2xl font-bold">{loan.title}</h3>
+                    <div className="flex items-center gap-3 mb-2">
+                      <Battery className="h-8 w-8" />
+                      <div>
+                        <h3 className="font-display text-2xl font-bold">{product.title}</h3>
+                        <p className="text-primary-foreground/80">{product.capacity}</p>
+                      </div>
+                    </div>
+                    <p className="text-3xl font-bold">{product.price}</p>
                   </div>
                   <div className="p-6">
-                    <p className="text-muted-foreground mb-4">{loan.description}</p>
+                    <p className="text-muted-foreground mb-4">{product.description}</p>
                     <ul className="space-y-2">
-                      {loan.features.map((feature) => (
+                      {product.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-2 text-sm">
                           <CheckCircle className="h-4 w-4 text-success" />
                           {feature}
@@ -200,12 +218,44 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Why Solar Section */}
+      <section className="py-16 bg-muted/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Why Choose Solar?</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Zap className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-display text-lg font-semibold mb-2">Reliable Power</h3>
+              <p className="text-muted-foreground text-sm">Say goodbye to power outages and enjoy consistent electricity for your home.</p>
+            </div>
+            <div className="text-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Leaf className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-display text-lg font-semibold mb-2">Eco-Friendly</h3>
+              <p className="text-muted-foreground text-sm">Reduce your carbon footprint and contribute to a cleaner environment.</p>
+            </div>
+            <div className="text-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-display text-lg font-semibold mb-2">Long-Term Savings</h3>
+              <p className="text-muted-foreground text-sm">Save money on electricity bills in the long run with free solar energy.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
-      <section className="py-20 bg-muted/50">
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-muted-foreground text-lg">Three simple steps to get your loan</p>
+            <p className="text-muted-foreground text-lg">Three simple steps to get your solar system</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {steps.map((step, index) => (
@@ -230,15 +280,15 @@ export default function Index() {
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-            Ready to Get Started?
+            Ready to Go Solar?
           </h2>
           <p className="text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join thousands of Yobe State civil servants who have trusted us with their financial needs.
+            Join thousands of Yobe State civil servants who have powered their homes with our solar solutions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" asChild className="text-lg px-8">
               <Link to="/auth?mode=signup">
-                Create Account
+                Apply for Solar Loan
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>

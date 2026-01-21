@@ -209,9 +209,9 @@ export default function ApplyLoan() {
             <div className="mx-auto h-20 w-20 rounded-full bg-success/10 flex items-center justify-center mb-4">
               <CheckCircle className="h-10 w-10 text-success" />
             </div>
-            <CardTitle className="font-display text-2xl">Application Submitted!</CardTitle>
+            <CardTitle className="font-display text-2xl">Solar Loan Application Submitted!</CardTitle>
             <CardDescription className="text-base">
-              Your loan application has been successfully submitted.
+              Your solar loan application has been successfully submitted.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -221,8 +221,8 @@ export default function ApplyLoan() {
             </div>
             
             <p className="text-sm text-muted-foreground">
-              Your application is now under review. You will be notified once a decision has been made.
-              Loan disbursements are processed at the end of each month.
+              Your solar loan application is now under review. You will be notified once a decision has been made.
+              Upon approval, your solar system will be scheduled for installation.
             </p>
             
             {/* Important SMS notification message */}
@@ -232,8 +232,8 @@ export default function ApplyLoan() {
                 <div>
                   <p className="font-medium text-sm text-primary">Important Information</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Please login to your loan application dashboard after <strong>24-48 hours</strong> to check your loan status. 
-                    You will receive an <strong>SMS notification</strong> if your loan is approved.
+                    Please login to your dashboard after <strong>24-48 hours</strong> to check your solar loan status. 
+                    You will receive an <strong>SMS notification</strong> if your application is approved.
                   </p>
                 </div>
               </div>
@@ -261,8 +261,8 @@ export default function ApplyLoan() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="font-display text-2xl font-bold">Loan Application</h1>
-          <p className="text-muted-foreground">Complete your loan application form</p>
+          <h1 className="font-display text-2xl font-bold">Solar Loan Application</h1>
+          <p className="text-muted-foreground">Complete your solar loan application form</p>
         </div>
       </div>
 

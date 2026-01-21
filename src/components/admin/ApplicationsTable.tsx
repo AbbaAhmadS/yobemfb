@@ -32,7 +32,7 @@ import {
   Building2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { LoanApplication, ApplicationStatus, AppRole, STATUS_LABELS } from '@/types/database';
+import { LoanApplication, ApplicationStatus, AppRole, STATUS_LABELS, getSolarProductName } from '@/types/database';
 import { toast } from 'sonner';
 
 interface ApplicationsTableProps {
@@ -204,7 +204,7 @@ export function ApplicationsTable({ role, userId }: ApplicationsTableProps) {
                 <TableRow>
                   <TableHead>Application ID</TableHead>
                   <TableHead>Applicant</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Solar Product</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Approvals</TableHead>
@@ -223,7 +223,7 @@ export function ApplicationsTable({ role, userId }: ApplicationsTableProps) {
                         <p className="text-sm text-muted-foreground">{app.ministry_department}</p>
                       </div>
                     </TableCell>
-                    <TableCell>{formatAmount(app.specific_amount)}</TableCell>
+                    <TableCell className="text-sm">{getSolarProductName(app.product_type)}</TableCell>
                     <TableCell>{formatDate(app.created_at)}</TableCell>
                     <TableCell>{getStatusBadge(app.status)}</TableCell>
                     <TableCell>

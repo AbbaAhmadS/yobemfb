@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SignedImage } from '@/components/ui/signed-image';
-import { LoanStep1Data, LoanStep2Data, LoanStep3Data, GuarantorData, LOAN_AMOUNT_LABELS } from '@/types/database';
-import { ArrowLeft, Send, User, FileText, CreditCard, Users, Loader2 } from 'lucide-react';
+import { LoanStep1Data, LoanStep2Data, LoanStep3Data, GuarantorData, getSolarProductName, getSolarProductPrice } from '@/types/database';
+import { ArrowLeft, Send, User, FileText, Sun, Users, Loader2 } from 'lucide-react';
 
 interface Step5Props {
   step1Data: LoanStep1Data;
@@ -35,10 +35,19 @@ export function Step5Review({
     }).format(amount);
   };
 
+  const getAccountTypeName = (type: string) => {
+    const types: Record<string, string> = {
+      savings: 'Savings Account',
+      current: 'Current Account',
+      corporate: 'Corporate Account',
+    };
+    return types[type] || type;
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-xl font-display font-semibold">Review Your Application</h2>
+        <h2 className="text-xl font-display font-semibold">Review Your Solar Loan Application</h2>
         <p className="text-muted-foreground mt-1">
           Please review all the information before submitting
         </p>
@@ -132,38 +141,32 @@ export function Step5Review({
           </CardContent>
         </Card>
 
-        {/* Loan Details */}
-        <Card>
+        {/* Solar Product Details */}
+        <Card className="border-primary/20 bg-primary/5">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-primary" />
-              Loan Details
+              <Sun className="h-4 w-4 text-primary" />
+              Solar Product Details
             </CardTitle>
           </CardHeader>
           <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-muted-foreground">Product Type:</span>
-              <p className="font-medium capitalize">
-                {step3Data.product_type.replace('_', ' ')} Loan
+              <span className="text-muted-foreground">Selected Product:</span>
+              <p className="font-medium text-primary">
+                {getSolarProductName(step3Data.product_type)}
               </p>
             </div>
             <div>
-              <span className="text-muted-foreground">Amount Range:</span>
-              <p className="font-medium">
-                {LOAN_AMOUNT_LABELS[step3Data.loan_amount_range]}
-              </p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Specific Amount:</span>
-              <p className="font-medium">{formatAmount(step3Data.specific_amount)}</p>
+              <span className="text-muted-foreground">Product Price:</span>
+              <p className="font-medium text-lg">{formatAmount(getSolarProductPrice(step3Data.product_type))}</p>
             </div>
             <div>
               <span className="text-muted-foreground">Repayment Period:</span>
               <p className="font-medium">{step3Data.repayment_period_months} Months</p>
             </div>
             <div>
-              <span className="text-muted-foreground">Bank Name:</span>
-              <p className="font-medium">{step3Data.bank_name}</p>
+              <span className="text-muted-foreground">Account Type:</span>
+              <p className="font-medium">{getAccountTypeName(step3Data.bank_name)}</p>
             </div>
             <div>
               <span className="text-muted-foreground">Account Number:</span>
@@ -219,7 +222,7 @@ export function Step5Review({
         <label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
           I confirm that all the information provided is accurate and complete. 
           I understand that providing false information may result in the rejection 
-          of my application and may be subject to legal action. I agree to the{' '}
+          of my solar loan application and may be subject to legal action. I agree to the{' '}
           <a href="/terms" target="_blank" className="text-primary underline">
             Terms and Conditions
           </a>{' '}
