@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { LoanApplication, AccountApplication, LOAN_AMOUNT_LABELS } from '@/types/database';
+import { LoanApplication, AccountApplication, getSolarProductName } from '@/types/database';
 import { useApplicationEligibility } from '@/hooks/useApplicationEligibility';
 import { downloadApplicationPDF } from '@/utils/pdfGenerator';
 import { SignedImage } from '@/components/ui/signed-image';
@@ -225,9 +225,9 @@ export default function Dashboard() {
                 <CreditCard className="h-7 w-7 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-display font-semibold text-lg">Apply for Loan</h3>
+                <h3 className="font-display font-semibold text-lg">Apply for Solar Loan</h3>
                 <p className="text-sm text-muted-foreground">
-                  {eligibility.canApply ? 'Start a new loan application' : 'Not eligible at this time'}
+                  {eligibility.canApply ? 'Get a complete solar system for your home' : 'Not eligible at this time'}
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -253,13 +253,13 @@ export default function Dashboard() {
 
         {/* Applications Section */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Loan Applications */}
+          {/* Solar Loan Applications */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="font-display">Loan Applications</CardTitle>
-                  <CardDescription>Your loan application history</CardDescription>
+                  <CardTitle className="font-display">Solar Loan Applications</CardTitle>
+                  <CardDescription>Your solar loan application history</CardDescription>
                 </div>
                 <Button size="sm" onClick={handleApplyForLoan} disabled={!eligibility.canApply}>
                   <Plus className="h-4 w-4 mr-1" />
@@ -273,9 +273,9 @@ export default function Dashboard() {
               ) : loanApplications.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                  <p className="text-muted-foreground">No loan applications yet</p>
+                  <p className="text-muted-foreground">No solar loan applications yet</p>
                   <Button className="mt-4" onClick={handleApplyForLoan} disabled={!eligibility.canApply}>
-                    Apply for Your First Loan
+                    Apply for Your First Solar Loan
                   </Button>
                 </div>
               ) : (
@@ -302,7 +302,7 @@ export default function Dashboard() {
                           <div>
                             <p className="font-medium">{app.application_id}</p>
                             <p className="text-sm text-muted-foreground">
-                              {formatAmount(app.specific_amount)} • {formatDate(app.created_at)}
+                              {getSolarProductName(app.product_type)} • {formatDate(app.created_at)}
                             </p>
                           </div>
                         </div>

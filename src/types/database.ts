@@ -155,13 +155,35 @@ export interface LoanStep2Data {
 }
 
 export interface LoanStep3Data {
-  product_type: LoanProductType;
+  product_type: LoanProductType; // Now used for solar product: short_term = Easy Solar, long_term = Smart Solar
   loan_amount_range: LoanAmountRange;
   specific_amount: number;
   repayment_period_months: number;
   bank_name: string; // Account type: savings/current/corporate
   bank_account_number: string;
 }
+
+// Solar Product Configuration
+export const SOLAR_PRODUCTS = {
+  short_term: {
+    name: 'Easy Solar Combo (1.2Kwh)',
+    price: 790000,
+    description: 'Perfect for small households with basic power needs',
+  },
+  long_term: {
+    name: 'Smart Solar Combo (2.6Kwh)',
+    price: 950000,
+    description: 'Ideal for larger households with higher power requirements',
+  },
+} as const;
+
+export const getSolarProductName = (productType: LoanProductType): string => {
+  return SOLAR_PRODUCTS[productType].name;
+};
+
+export const getSolarProductPrice = (productType: LoanProductType): number => {
+  return SOLAR_PRODUCTS[productType].price;
+};
 
 export interface GuarantorData {
   full_name: string;
