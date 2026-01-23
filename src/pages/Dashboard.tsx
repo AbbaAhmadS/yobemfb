@@ -480,7 +480,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Product Type:</span>
-                  <p className="font-medium capitalize">{selectedAppForView.product_type.replace('_', ' ')} Loan</p>
+                  <p className="font-medium">{getSolarProductName(selectedAppForView.product_type)}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Date Applied:</span>

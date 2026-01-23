@@ -16,7 +16,7 @@ export function Footer() {
               />
             </div>
             <p className="text-sm text-primary-foreground/80">
-              Empowering Yobe State civil servants with accessible and affordable loan solutions for over 20 years.
+              Empowering Yobe State and Local Governments civil servants with accessible and affordable loan solutions for over 20 years.
             </p>
           </div>
 
@@ -51,8 +51,8 @@ export function Footer() {
           <div>
             <h3 className="font-display font-semibold text-lg mb-4">Our Services</h3>
             <ul className="space-y-2">
-              <li className="text-sm text-primary-foreground/80">Short Term Loans</li>
-              <li className="text-sm text-primary-foreground/80">Long Term Loans</li>
+              <li className="text-sm text-primary-foreground/80">Cola Solar 1000 Pro</li>
+              <li className="text-sm text-primary-foreground/80">Cola Solar 2000</li>
               <li className="text-sm text-primary-foreground/80">Savings Account</li>
               <li className="text-sm text-primary-foreground/80">Current Account</li>
               <li className="text-sm text-primary-foreground/80">Corporate Account</li>
