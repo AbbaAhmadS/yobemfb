@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import colaSolar2000Image from '@/assets/cola-solar-2000.jpg';
 import colaSolar1000Image from '@/assets/cola-solar-1000.jpg';
 import { SolarProductAccordionCard } from '@/components/solar/SolarProductAccordionCard';
+import { SolarComparisonTable } from '@/components/solar/SolarComparisonTable';
 
 export default function Index() {
   const [showChatPrompt, setShowChatPrompt] = useState(false);
@@ -226,6 +227,10 @@ export default function Index() {
           <div className="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
             <SolarProductAccordionCard product={solarProducts[0]} />
             <SolarProductAccordionCard product={solarProducts[1]} recommended />
+          </div>
+
+          <div className="max-w-6xl mx-auto mt-10">
+            <SolarComparisonTable />
           </div>
         </div>
       </section>
