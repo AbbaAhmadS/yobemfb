@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Clock, Users, CheckCircle, Sun, Zap, FileText, MessageCircle, Bot, Sparkles, Battery, Leaf, Tv, Lightbulb, Fan, Wind, Refrigerator, Cable, Gauge } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Users, CheckCircle, Sun, Zap, FileText, MessageCircle, Bot, Sparkles, Battery, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import colaSolar2000Image from '@/assets/cola-solar-2000.jpg';
 import colaSolar1000Image from '@/assets/cola-solar-1000.jpg';
+import { SolarProductAccordionCard } from '@/components/solar/SolarProductAccordionCard';
 
 export default function Index() {
   const [showChatPrompt, setShowChatPrompt] = useState(false);
@@ -38,45 +39,57 @@ export default function Index() {
 
   const solarProducts = [
     {
+      id: 'cola_1000' as const,
       title: 'Cola Solar 1000 Pro',
-      capacity: '1kWh',
-      price: '₦630,000',
-      image: colaSolar1000Image,
-      description: 'All-in-one solar system with lithium (LiFePO₄) battery and pure sine-wave inverter — ideal for essential home power.',
-      specs: [
-        { icon: Battery, label: 'Battery', value: '1kWh (LiFePO₄)' },
-        { icon: Zap, label: 'AC Output', value: '300W (Pure sine-wave)' },
-        { icon: Sun, label: 'Solar Panels', value: '× 2' },
-        { icon: Cable, label: 'Cable', value: '15mm (Heavy-duty)' },
+      subtitle: 'All-in-One Solar Power System (1 kWh)',
+      price: 630000,
+      imageSrc: colaSolar1000Image,
+      keyFeatures: [
+        'All-in-one solar system with integrated inverter, controller, and lithium battery (5-year warranty).',
+        '1 kWh battery capacity for steady energy storage.',
+        '300 W pure sine-wave output for safe, clean power (sensitive electronics friendly).',
+        'Dual charging options: solar panels and grid (AC).',
+        'Compact and portable (approx. 8.26 kg).',
       ],
-      powers: [
-        { icon: Refrigerator, label: 'Fridge', value: '(AC/DC only)' },
-        { icon: Tv, label: 'TV', value: '× 2' },
-        { icon: Lightbulb, label: 'Bulbs', value: '× 6' },
-        { icon: Fan, label: 'Fan', value: '' },
+      includedComponents: [
+        'All-in-one solar unit (inverter + controller + lithium battery).',
+        '2 solar panels for sustainable energy harvesting.',
+        '15 mm heavy-duty cable for safe connections.',
       ],
-      recommended: false,
+      whatItPowers: [
+        'Fridge (only AC/DC fridge supported)',
+        'TV × 2',
+        'Bulbs × 6',
+        'Fan',
+      ],
+      highlight: 'Ideal for everyday home essentials.',
     },
     {
+      id: 'cola_2000' as const,
       title: 'Cola Solar 2000',
-      capacity: '2kWh',
-      price: '₦1,232,000',
-      image: colaSolar2000Image,
-      description: 'High-capacity all-in-one solar power system for dependable power through outages and unstable grid supply.',
-      specs: [
-        { icon: Battery, label: 'Battery', value: '2kWh (LiFePO₄)' },
-        { icon: Zap, label: 'AC Output', value: '1000W (Pure sine-wave)' },
-        { icon: Sun, label: 'Solar Panels', value: '× 4' },
-        { icon: Cable, label: 'Cable', value: '15mm (Heavy-duty)' },
+      subtitle: 'All-in-One Solar Power System (2 kWh)',
+      price: 1232000,
+      imageSrc: colaSolar2000Image,
+      keyFeatures: [
+        'All-in-one solar system: integrated inverter, controller, and LiFePO₄ solar battery (5-year warranty).',
+        '2000 Wh (2 kWh) battery capacity for lights, appliances, and more.',
+        'Pure sine-wave output: reliable 1000 W AC output for safe appliance operation.',
+        'Dual charging options: solar panels and grid.',
+        'Automatic grid power switching for seamless outages transition.',
       ],
-      powers: [
-        { icon: Refrigerator, label: 'Fridge', value: '' },
-        { icon: Lightbulb, label: 'All house bulbs', value: '' },
-        { icon: Tv, label: 'TVs', value: '× 3' },
-        { icon: Wind, label: 'Pressing iron', value: '' },
-        { icon: Wind, label: 'Electric heater', value: '' },
+      includedComponents: [
+        'High-capacity 2000 Wh solar generator with built-in inverter.',
+        '4 solar panels for efficient energy harvesting.',
+        'Heavy-duty 15 mm cable for reliable and safe connections.',
       ],
-      recommended: true,
+      whatItPowers: [
+        'Fridge',
+        'All house light bulbs',
+        'TVs (up to 3 units)',
+        'Pressing iron',
+        'Electric heater / electric kettle heater',
+      ],
+      highlight: 'Designed for full household power needs during outages.',
     },
   ];
 
@@ -196,7 +209,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Solar Products - Enhanced with Images */}
+      {/* Solar Products - DOCX details + repayment calculator */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -206,113 +219,13 @@ export default function Index() {
             </div>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Our Solar Products</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose the solar package that best fits your household needs. Both options come with professional installation and warranty.
+              Compare full features, included components, and what each system can power—then see your estimated monthly repayment for 12 or 18 months.
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
-            {solarProducts.map((product, index) => (
-              <Card 
-                key={product.title} 
-                className={`card-elevated overflow-hidden group hover:shadow-2xl transition-all duration-300 relative ${product.recommended ? 'ring-2 ring-primary lg:scale-105' : ''}`}
-              >
-                {product.recommended && (
-                  <div className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
-                    ⭐ Recommended
-                  </div>
-                )}
-                
-                <CardContent className="p-0">
-                  {/* Product Image */}
-                  <div className="relative overflow-hidden">
-                    <img 
-                      src={product.image} 
-                      alt={product.title}
-                      className="w-full h-64 object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="font-display text-2xl font-bold text-foreground">{product.title}</h3>
-                      <p className="text-muted-foreground">{product.capacity} Battery Capacity</p>
-                    </div>
-                  </div>
-
-                  {/* Price Banner */}
-                  <div className="bg-gradient-to-r from-primary to-primary/80 py-4 px-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary-foreground/80 text-sm font-medium">Total Price</span>
-                      <span className="text-3xl font-bold text-primary-foreground">{product.price}</span>
-                    </div>
-                    <p className="text-primary-foreground/70 text-sm mt-1">Flexible repayment over 12 or 18 months</p>
-                  </div>
-
-                  {/* Specifications */}
-                  <div className="p-6">
-                    <p className="text-muted-foreground mb-6">{product.description}</p>
-                    
-                    {/* System Components */}
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-primary" />
-                        System Components
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {product.specs.map((spec) => (
-                          <div key={spec.label} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                            <spec.icon className="h-4 w-4 text-primary flex-shrink-0" />
-                            <div className="text-xs">
-                              <span className="text-muted-foreground">{spec.label}:</span>
-                              <span className="font-medium text-foreground ml-1">{spec.value}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* What It Powers */}
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                        <Lightbulb className="h-4 w-4 text-primary" />
-                        What It Powers
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {product.powers.map((item) => (
-                          <div key={item.label} className="flex items-center gap-2 bg-success/10 rounded-lg px-3 py-2">
-                            <item.icon className="h-4 w-4 text-success flex-shrink-0" />
-                            <span className="text-xs text-foreground">
-                              {item.label} {item.value && <span className="font-medium">{item.value}</span>}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Benefits */}
-                    <div className="space-y-2 mb-6">
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-success" />
-                        <span>Complete solar system package</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-success" />
-                        <span>Professional installation included</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-success" />
-                        <span>Warranty included</span>
-                      </div>
-                    </div>
-
-                    <Button className="w-full" size="lg" asChild>
-                      <Link to="/auth?mode=signup">
-                        Apply for {product.title}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <SolarProductAccordionCard product={solarProducts[0]} />
+            <SolarProductAccordionCard product={solarProducts[1]} recommended />
           </div>
         </div>
       </section>

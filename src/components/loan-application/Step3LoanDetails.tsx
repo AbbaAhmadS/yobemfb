@@ -20,7 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LoanStep3Data, SOLAR_PRODUCTS, getSolarProductPrice } from '@/types/database';
-import { ArrowLeft, ArrowRight, Info, Sun, Battery } from 'lucide-react';
+import { computeMonthlyRepayment } from '@/lib/repayment';
+import { ArrowLeft, ArrowRight, CalendarClock, Info, Sun, Battery } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect } from 'react';
@@ -54,6 +55,8 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
   });
 
   const selectedProduct = form.watch('product_type');
+  const selectedMonths = form.watch('repayment_period_months');
+  const selectedAmount = form.watch('specific_amount');
 
   // Update specific_amount when product type changes
   useEffect(() => {
@@ -172,7 +175,19 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
         <Alert className="bg-primary/5 border-primary/20">
           <Sun className="h-4 w-4 text-primary" />
           <AlertDescription>
-            <strong>Selected Product:</strong> {SOLAR_PRODUCTS[selectedProduct].name} - {formatPrice(getSolarProductPrice(selectedProduct))}
+            <div className="flex flex-col gap-1">
+              <div>
+                <strong>Selected Product:</strong> {SOLAR_PRODUCTS[selectedProduct].name} — {formatPrice(getSolarProductPrice(selectedProduct))}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CalendarClock className="h-4 w-4 text-primary" />
+                Estimated monthly repayment:{" "}
+                <span className="font-semibold text-foreground">
+                  {formatPrice(computeMonthlyRepayment(selectedAmount || 0, selectedMonths || 0))}
+                </span>
+                <span>/month</span>
+              </div>
+            </div>
           </AlertDescription>
         </Alert>
 
