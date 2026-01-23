@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoanApplication, AccountApplication } from '@/types/database';
+import { computeSolarLoanBreakdown } from '@/lib/solar-analytics';
 import { toast } from 'sonner';
 
 interface AnalyticsData {
@@ -49,6 +50,10 @@ interface AnalyticsData {
     totalAmount: number;
     avgAmount: number;
     totalApprovedAmount: number;
+    productBreakdown: {
+      short_term: { count: number; totalAmount: number };
+      long_term: { count: number; totalAmount: number };
+    };
   };
   accountStats: {
     total: number;
@@ -114,6 +119,8 @@ export default function AnalyticsDashboard() {
       const loans = (loanRes.data || []) as LoanApplication[];
       const accounts = (accountRes.data || []) as AccountApplication[];
 
+      const breakdown = computeSolarLoanBreakdown(loans);
+
       // Calculate loan stats
       const loanStats = {
         total: loans.length,
@@ -122,9 +129,10 @@ export default function AnalyticsDashboard() {
         declined: loans.filter(l => l.status === 'declined').length,
         underReview: loans.filter(l => l.status === 'under_review').length,
         flagged: loans.filter(l => l.status === 'flagged').length,
-        totalAmount: loans.reduce((sum, l) => sum + (l.specific_amount || 0), 0),
-        avgAmount: loans.length > 0 ? loans.reduce((sum, l) => sum + (l.specific_amount || 0), 0) / loans.length : 0,
+        totalAmount: breakdown.totalAmount,
+        avgAmount: loans.length > 0 ? breakdown.totalAmount / loans.length : 0,
         totalApprovedAmount: loans.reduce((sum, l) => sum + (l.approved_amount || 0), 0),
+        productBreakdown: breakdown.byProduct,
       };
 
       // Calculate account stats
@@ -380,6 +388,47 @@ export default function AnalyticsDashboard() {
                   {getTrendPercentage(analytics.trends.accountsThisMonth, analytics.trends.accountsLastMonth)}%
                 </span>
                 <span className="text-muted-foreground">vs last month</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Solar Products Breakdown */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Cola Solar 1000 Pro (1kWh)</CardTitle>
+              <CardDescription>Totals within selected date range</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-3xl font-bold">{analytics.loanStats.productBreakdown.short_term.count}</p>
+                  <p className="text-sm text-muted-foreground">Applications</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-semibold">{formatAmount(analytics.loanStats.productBreakdown.short_term.totalAmount)}</p>
+                  <p className="text-sm text-muted-foreground">Total amount</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Cola Solar 2000 (2kWh)</CardTitle>
+              <CardDescription>Totals within selected date range</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-3xl font-bold">{analytics.loanStats.productBreakdown.long_term.count}</p>
+                  <p className="text-sm text-muted-foreground">Applications</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-semibold">{formatAmount(analytics.loanStats.productBreakdown.long_term.totalAmount)}</p>
+                  <p className="text-sm text-muted-foreground">Total amount</p>
+                </div>
               </div>
             </CardContent>
           </Card>
