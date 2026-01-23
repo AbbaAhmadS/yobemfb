@@ -36,6 +36,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoanApplication, ApplicationStatus, STATUS_LABELS, getSolarProductName } from '@/types/database';
+import { computeSolarLoanBreakdown } from '@/lib/solar-analytics';
 import { toast } from 'sonner';
 import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,10 @@ export default function CreditAdminDashboard() {
     declined: 0,
     totalLoanValue: 0,
     totalApprovedAmount: 0,
+    cola1000Count: 0,
+    cola1000Amount: 0,
+    cola2000Count: 0,
+    cola2000Amount: 0,
   });
 
   useEffect(() => {
@@ -106,7 +111,8 @@ export default function CreditAdminDashboard() {
       filtered = filtered.filter(a => new Date(a.created_at) <= endOfDay);
     }
 
-    const totalLoanValue = filtered.reduce((sum, a) => sum + (a.specific_amount || 0), 0);
+    const breakdown = computeSolarLoanBreakdown(filtered);
+    const totalLoanValue = breakdown.totalAmount;
     const totalApprovedAmount = filtered
       .filter(a => a.status === 'approved')
       .reduce((sum, a) => sum + (a.approved_amount || 0), 0);
@@ -118,6 +124,10 @@ export default function CreditAdminDashboard() {
       declined: filtered.filter((a) => a.status === 'declined').length,
       totalLoanValue,
       totalApprovedAmount,
+      cola1000Count: breakdown.byProduct.short_term.count,
+      cola1000Amount: breakdown.byProduct.short_term.totalAmount,
+      cola2000Count: breakdown.byProduct.long_term.count,
+      cola2000Amount: breakdown.byProduct.long_term.totalAmount,
     });
   };
 
@@ -348,6 +358,47 @@ export default function CreditAdminDashboard() {
                 <div>
                   <p className="text-2xl font-bold text-success">{formatAmount(stats.totalApprovedAmount)}</p>
                   <p className="text-sm text-muted-foreground">Total Approved Amount</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Product Breakdown */}
+        <div className="grid lg:grid-cols-2 gap-4 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Cola Solar 1000 Pro (1kWh)</CardTitle>
+              <CardDescription>Within selected date range</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-2xl font-bold">{stats.cola1000Count}</p>
+                  <p className="text-sm text-muted-foreground">Applications</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-semibold">{formatAmount(stats.cola1000Amount)}</p>
+                  <p className="text-sm text-muted-foreground">Total amount</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Cola Solar 2000 (2kWh)</CardTitle>
+              <CardDescription>Within selected date range</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-2xl font-bold">{stats.cola2000Count}</p>
+                  <p className="text-sm text-muted-foreground">Applications</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-semibold">{formatAmount(stats.cola2000Amount)}</p>
+                  <p className="text-sm text-muted-foreground">Total amount</p>
                 </div>
               </div>
             </CardContent>
