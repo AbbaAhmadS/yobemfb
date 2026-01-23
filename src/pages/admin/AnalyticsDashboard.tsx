@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
@@ -22,6 +22,7 @@ import {
   TrendingUp,
   TrendingDown,
   FileText,
+  Download,
   Clock,
   CheckCircle,
   XCircle,
@@ -33,9 +34,21 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { LoanApplication, AccountApplication } from '@/types/database';
+import { LoanApplication, AccountApplication, ApplicationStatus } from '@/types/database';
 import { computeSolarLoanBreakdown } from '@/lib/solar-analytics';
+import { downloadCsv, toCsv } from '@/lib/csv';
+import { generateAnalyticsReportHtml } from '@/utils/analyticsReportGenerator';
 import { toast } from 'sonner';
+import {
+  BarChart,
+  Bar,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 interface AnalyticsData {
   loanApplications: LoanApplication[];
@@ -76,6 +89,7 @@ export default function AnalyticsDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [loanStatusFilter, setLoanStatusFilter] = useState<'all' | 'pending' | 'approved' | 'declined'>('all');
 
   useEffect(() => {
     if (!isAdmin) {
@@ -204,6 +218,119 @@ export default function AnalyticsDashboard() {
     return null;
   };
 
+  const baseLoanApplications = analytics?.loanApplications ?? [];
+
+  const filteredLoans = useMemo(() => {
+    const base = baseLoanApplications;
+    if (loanStatusFilter === 'all') return base;
+    return base.filter((l) => l.status === (loanStatusFilter as ApplicationStatus));
+  }, [baseLoanApplications, loanStatusFilter]);
+
+  const filteredBreakdown = useMemo(() => computeSolarLoanBreakdown(filteredLoans), [filteredLoans]);
+
+  const filteredLoanStats = useMemo(() => {
+    const total = filteredLoans.length;
+    const totalAmount = filteredBreakdown.totalAmount;
+    return {
+      total,
+      totalAmount,
+      avgAmount: total > 0 ? totalAmount / total : 0,
+      byProduct: filteredBreakdown.byProduct,
+    };
+  }, [filteredLoans, filteredBreakdown]);
+
+  const monthlyProductTrend = useMemo(() => {
+    // Group by YYYY-MM and compute per-product counts and amounts
+    const buckets = new Map<
+      string,
+      { month: string; cola1000Count: number; cola2000Count: number; cola1000Amount: number; cola2000Amount: number }
+    >();
+
+    for (const loan of filteredLoans) {
+      const d = new Date(loan.created_at);
+      // YYYY-MM for stable sort, label for display
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('en-NG', { year: 'numeric', month: 'short' });
+
+      if (!buckets.has(key)) {
+        buckets.set(key, {
+          month: label,
+          cola1000Count: 0,
+          cola2000Count: 0,
+          cola1000Amount: 0,
+          cola2000Amount: 0,
+        });
+      }
+
+      const b = buckets.get(key)!;
+      const amount = loan.specific_amount || 0;
+      if (loan.product_type === 'short_term') {
+        b.cola1000Count += 1;
+        b.cola1000Amount += amount;
+      } else {
+        b.cola2000Count += 1;
+        b.cola2000Amount += amount;
+      }
+    }
+
+    return Array.from(buckets.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, v]) => v);
+  }, [filteredLoans]);
+
+  const statusLabel = loanStatusFilter === 'all'
+    ? 'All statuses'
+    : loanStatusFilter === 'pending'
+      ? 'Pending'
+      : loanStatusFilter === 'approved'
+        ? 'Approved'
+        : 'Declined';
+
+  const handleExportCsv = () => {
+    const csvRows = filteredLoans.map((l) => ({
+      application_id: l.application_id,
+      full_name: l.full_name,
+      product_type: l.product_type,
+      specific_amount: l.specific_amount || 0,
+      repayment_period_months: l.repayment_period_months,
+      status: l.status,
+      created_at: l.created_at,
+    }));
+
+    const csv = toCsv(csvRows);
+    const name = `analytics_solar_${loanStatusFilter}_${startDate ? startDate.toISOString().slice(0, 10) : 'all'}_${endDate ? endDate.toISOString().slice(0, 10) : 'all'}.csv`;
+    downloadCsv(csv, name);
+  };
+
+  const handleExportPdf = () => {
+    const html = generateAnalyticsReportHtml({
+      title: 'Solar Loan Analytics Report',
+      generatedAt: new Date(),
+      dateFrom: startDate,
+      dateTo: endDate,
+      statusLabel,
+      totalCount: filteredLoanStats.total,
+      totalAmount: filteredLoanStats.totalAmount,
+      cola1000Count: filteredLoanStats.byProduct.short_term.count,
+      cola1000Amount: filteredLoanStats.byProduct.short_term.totalAmount,
+      cola2000Count: filteredLoanStats.byProduct.long_term.count,
+      cola2000Amount: filteredLoanStats.byProduct.long_term.totalAmount,
+      monthly: monthlyProductTrend,
+      loans: filteredLoans,
+    });
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+    toast.success('Report opened — use Print to save as PDF');
+    setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -233,10 +360,20 @@ export default function AnalyticsDashboard() {
               <p className="text-sm text-muted-foreground">Real-time application insights</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => fetchAnalytics(startDate, endDate)}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => fetchAnalytics(startDate, endDate)}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportCsv}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPdf}>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -321,7 +458,7 @@ export default function AnalyticsDashboard() {
                 <p className="text-sm text-muted-foreground">Total Solar Applications</p>
                 <FileText className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-3xl font-bold">{analytics.loanStats.total}</p>
+              <p className="text-3xl font-bold">{filteredLoanStats.total}</p>
               <div className="flex items-center gap-1 mt-2 text-sm">
                 {getTrendIcon(analytics.trends.loansThisMonth, analytics.trends.loansLastMonth)}
                 <span className={analytics.trends.loansThisMonth >= analytics.trends.loansLastMonth ? 'text-success' : 'text-destructive'}>
@@ -338,9 +475,9 @@ export default function AnalyticsDashboard() {
                 <p className="text-sm text-muted-foreground">Total Solar Value</p>
                 <Banknote className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-3xl font-bold">{formatAmount(analytics.loanStats.totalAmount)}</p>
+              <p className="text-3xl font-bold">{formatAmount(filteredLoanStats.totalAmount)}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Avg: {formatAmount(analytics.loanStats.avgAmount)}
+                Avg: {formatAmount(filteredLoanStats.avgAmount)}
               </p>
             </CardContent>
           </Card>
@@ -403,11 +540,11 @@ export default function AnalyticsDashboard() {
             <CardContent>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-3xl font-bold">{analytics.loanStats.productBreakdown.short_term.count}</p>
+                  <p className="text-3xl font-bold">{filteredLoanStats.byProduct.short_term.count}</p>
                   <p className="text-sm text-muted-foreground">Applications</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-semibold">{formatAmount(analytics.loanStats.productBreakdown.short_term.totalAmount)}</p>
+                  <p className="text-xl font-semibold">{formatAmount(filteredLoanStats.byProduct.short_term.totalAmount)}</p>
                   <p className="text-sm text-muted-foreground">Total amount</p>
                 </div>
               </div>
@@ -422,14 +559,85 @@ export default function AnalyticsDashboard() {
             <CardContent>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-3xl font-bold">{analytics.loanStats.productBreakdown.long_term.count}</p>
+                  <p className="text-3xl font-bold">{filteredLoanStats.byProduct.long_term.count}</p>
                   <p className="text-sm text-muted-foreground">Applications</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-semibold">{formatAmount(analytics.loanStats.productBreakdown.long_term.totalAmount)}</p>
+                  <p className="text-xl font-semibold">{formatAmount(filteredLoanStats.byProduct.long_term.totalAmount)}</p>
                   <p className="text-sm text-muted-foreground">Total amount</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Status Filter Toggle (affects product breakdown + charts + exports) */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg">Solar analytics filter</CardTitle>
+            <CardDescription>Filter solar analytics by status (combined with date range)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { key: 'all', label: 'All' },
+                { key: 'pending', label: 'Pending' },
+                { key: 'approved', label: 'Approved' },
+                { key: 'declined', label: 'Declined' },
+              ] as const).map((opt) => (
+                <Button
+                  key={opt.key}
+                  type="button"
+                  variant={loanStatusFilter === opt.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLoanStatusFilter(opt.key)}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Product Trend Charts */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Monthly applications (by product)</CardTitle>
+              <CardDescription>{statusLabel} • {startDate || endDate ? 'Date filtered' : 'All dates'}</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyProductTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="cola1000Count" name="Cola Solar 1000 Pro" fill="hsl(var(--primary))" />
+                  <Bar dataKey="cola2000Count" name="Cola Solar 2000" fill="hsl(var(--secondary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Monthly total amount (by product)</CardTitle>
+              <CardDescription>Sum of specific_amount</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyProductTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(v) => `${Number(v) / 1000}k`} />
+                  <Tooltip formatter={(v: any) => formatAmount(Number(v))} />
+                  <Legend />
+                  <Bar dataKey="cola1000Amount" name="1000 Pro amount" fill="hsl(var(--accent))" />
+                  <Bar dataKey="cola2000Amount" name="2000 amount" fill="hsl(var(--info))" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
@@ -505,13 +713,13 @@ export default function AnalyticsDashboard() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    <AlertTriangle className="h-4 w-4 text-info" />
                     <span>Flagged</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
                       <div 
-                        className="h-full bg-orange-500 rounded-full"
+                        className="h-full bg-info rounded-full"
                         style={{ width: `${(analytics.loanStats.flagged / analytics.loanStats.total) * 100 || 0}%` }}
                       />
                     </div>
