@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Shield, Clock, Users, CheckCircle, Sun, Zap, FileText, MessageCircle, Bot, Sparkles, Battery, Leaf, Tv, Lightbulb, Fan, Wind, Refrigerator, Cable, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import smartSolarImage from '@/assets/smart-solar-combo.jpg';
-import easySolarImage from '@/assets/easy-solar-combo.jpg';
+import colaSolar2000Image from '@/assets/cola-solar-2000.jpg';
+import colaSolar1000Image from '@/assets/cola-solar-1000.jpg';
 
 export default function Index() {
   const [showChatPrompt, setShowChatPrompt] = useState(false);
@@ -27,57 +27,54 @@ export default function Index() {
     {
       icon: Shield,
       title: 'Secure & Affordable',
-      description: 'Flexible repayment options over 12 or 24 months. Your financial information is protected with bank-grade security.',
+      description: 'Flexible repayment options over 12 or 18 months. Your financial information is protected with bank-grade security.',
     },
     {
       icon: Users,
       title: '20+ Years Experience',
-      description: 'Trusted by thousands of Yobe State civil servants for over two decades.',
+      description: 'Trusted by thousands of Yobe State and Local Governments civil servants for over two decades.',
     },
   ];
 
   const solarProducts = [
     {
-      title: 'Easy Solar Combo',
-      capacity: '1.2kWh',
-      price: '₦790,000',
-      image: easySolarImage,
-      description: 'Perfect for small households with basic power needs.',
+      title: 'Cola Solar 1000 Pro',
+      capacity: '1kWh',
+      price: '₦630,000',
+      image: colaSolar1000Image,
+      description: 'All-in-one solar system with lithium (LiFePO₄) battery and pure sine-wave inverter — ideal for essential home power.',
       specs: [
-        { icon: Battery, label: 'Battery', value: '1.2kWh' },
-        { icon: Sun, label: 'Solar Panels', value: '200W × 4' },
-        { icon: Zap, label: 'Inverter', value: '200W' },
-        { icon: Gauge, label: 'Controller', value: '60A' },
-        { icon: Cable, label: 'DC Cable', value: '6mm (15m)' },
+        { icon: Battery, label: 'Battery', value: '1kWh (LiFePO₄)' },
+        { icon: Zap, label: 'AC Output', value: '300W (Pure sine-wave)' },
+        { icon: Sun, label: 'Solar Panels', value: '× 2' },
+        { icon: Cable, label: 'Cable', value: '15mm (Heavy-duty)' },
       ],
       powers: [
-        { icon: Tv, label: 'TV', value: '× 1' },
-        { icon: Lightbulb, label: 'Bulbs', value: '× 5' },
-        { icon: Fan, label: 'Fan ACDC', value: '× 2' },
-        { icon: Wind, label: 'Blender', value: '× 1' },
-        { icon: Refrigerator, label: 'Fridge', value: '× 1 (day only)' },
+        { icon: Refrigerator, label: 'Fridge', value: '(AC/DC only)' },
+        { icon: Tv, label: 'TV', value: '× 2' },
+        { icon: Lightbulb, label: 'Bulbs', value: '× 6' },
+        { icon: Fan, label: 'Fan', value: '' },
       ],
       recommended: false,
     },
     {
-      title: 'Smart Solar Combo',
-      capacity: '2.6kWh',
-      price: '₦950,000',
-      image: smartSolarImage,
-      description: 'Ideal for larger households with higher power requirements.',
+      title: 'Cola Solar 2000',
+      capacity: '2kWh',
+      price: '₦1,232,000',
+      image: colaSolar2000Image,
+      description: 'High-capacity all-in-one solar power system for dependable power through outages and unstable grid supply.',
       specs: [
-        { icon: Battery, label: 'Battery', value: '2.6kWh' },
-        { icon: Sun, label: 'Solar Panels', value: '200W × 6' },
-        { icon: Zap, label: 'Inverter', value: '2000W' },
-        { icon: Gauge, label: 'Controller', value: '80A' },
-        { icon: Cable, label: 'DC Cable', value: '6mm' },
+        { icon: Battery, label: 'Battery', value: '2kWh (LiFePO₄)' },
+        { icon: Zap, label: 'AC Output', value: '1000W (Pure sine-wave)' },
+        { icon: Sun, label: 'Solar Panels', value: '× 4' },
+        { icon: Cable, label: 'Cable', value: '15mm (Heavy-duty)' },
       ],
       powers: [
-        { icon: Refrigerator, label: 'Fridge', value: '× 2 (day only)' },
-        { icon: Tv, label: 'TV', value: '× 1' },
-        { icon: Lightbulb, label: 'Bulbs', value: '× 8' },
-        { icon: Fan, label: 'Fan', value: '× 2' },
-        { icon: Wind, label: 'Blender, Iron etc.', value: '' },
+        { icon: Refrigerator, label: 'Fridge', value: '' },
+        { icon: Lightbulb, label: 'All house bulbs', value: '' },
+        { icon: Tv, label: 'TVs', value: '× 3' },
+        { icon: Wind, label: 'Pressing iron', value: '' },
+        { icon: Wind, label: 'Electric heater', value: '' },
       ],
       recommended: true,
     },
@@ -129,7 +126,7 @@ export default function Index() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-secondary/20 text-secondary-foreground px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-in">
               <Sun className="h-4 w-4" />
-              Solar Loan Solutions for Yobe State Civil Servants
+              Solar Loan Solutions for Yobe State and Local Governments Civil Servants
             </div>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-slide-up">
               Power Your Home with{' '}
@@ -137,7 +134,7 @@ export default function Index() {
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               Yobe Microfinance Bank offers affordable solar loan solutions 
-              exclusively for Yobe State and Local Governments Civil Servants. Get a complete solar system today and pay over 12 or 24 months.
+              exclusively for Yobe State and Local Governments Civil Servants. Get a complete solar system today and pay over 12 or 18 months.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <Button size="lg" asChild className="text-lg px-8">
@@ -246,7 +243,7 @@ export default function Index() {
                       <span className="text-primary-foreground/80 text-sm font-medium">Total Price</span>
                       <span className="text-3xl font-bold text-primary-foreground">{product.price}</span>
                     </div>
-                    <p className="text-primary-foreground/70 text-sm mt-1">Flexible repayment over 12 or 24 months</p>
+                    <p className="text-primary-foreground/70 text-sm mt-1">Flexible repayment over 12 or 18 months</p>
                   </div>
 
                   {/* Specifications */}

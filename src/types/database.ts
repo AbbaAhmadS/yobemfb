@@ -166,14 +166,14 @@ export interface LoanStep3Data {
 // Solar Product Configuration
 export const SOLAR_PRODUCTS = {
   short_term: {
-    name: 'Easy Solar Combo (1.2Kwh)',
-    price: 790000,
-    description: 'Perfect for small households with basic power needs',
+    name: 'Cola Solar 1000 Pro (1kWh)',
+    price: 630000,
+    description: 'Compact all-in-one solar system for essential home power needs',
   },
   long_term: {
-    name: 'Smart Solar Combo (2.6Kwh)',
-    price: 950000,
-    description: 'Ideal for larger households with higher power requirements',
+    name: 'Cola Solar 2000 (2kWh)',
+    price: 1232000,
+    description: 'High-capacity all-in-one solar system for full household power needs',
   },
 } as const;
 
