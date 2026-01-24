@@ -10,9 +10,8 @@ import { LoanFormProgress } from '@/components/loan-application/LoanFormProgress
 import { Step1BasicInfo } from '@/components/loan-application/Step1BasicInfo';
 import { Step2Identification } from '@/components/loan-application/Step2Identification';
 import { Step3LoanDetails } from '@/components/loan-application/Step3LoanDetails';
-import { Step4Guarantor } from '@/components/loan-application/Step4Guarantor';
 import { Step5Review } from '@/components/loan-application/Step5Review';
-import { LoanStep1Data, LoanStep2Data, LoanStep3Data, GuarantorData } from '@/types/database';
+import { LoanStep1Data, LoanStep2Data, LoanStep3Data } from '@/types/database';
 import { downloadApplicationPDF } from '@/utils/pdfGenerator';
 
 // Local storage key for draft
@@ -23,7 +22,6 @@ interface DraftData {
   step1Data: Partial<LoanStep1Data>;
   step2Data: Partial<LoanStep2Data>;
   step3Data: Partial<LoanStep3Data>;
-  guarantorData: Partial<GuarantorData>;
   lastSaved: string;
 }
 
@@ -41,7 +39,6 @@ export default function ApplyLoan() {
   const [step1Data, setStep1Data] = useState<Partial<LoanStep1Data>>({});
   const [step2Data, setStep2Data] = useState<Partial<LoanStep2Data>>({});
   const [step3Data, setStep3Data] = useState<Partial<LoanStep3Data>>({});
-  const [guarantorData, setGuarantorData] = useState<Partial<GuarantorData>>({});
 
   // Load draft on mount
   useEffect(() => {
@@ -49,11 +46,11 @@ export default function ApplyLoan() {
     if (savedDraft) {
       try {
         const draft: DraftData = JSON.parse(savedDraft);
-        setCurrentStep(draft.currentStep || 1);
+        const normalizedStep = Math.min(draft.currentStep || 1, 4);
+        setCurrentStep(normalizedStep);
         setStep1Data(draft.step1Data || {});
         setStep2Data(draft.step2Data || {});
         setStep3Data(draft.step3Data || {});
-        setGuarantorData(draft.guarantorData || {});
         toast.info(`Draft loaded from ${new Date(draft.lastSaved).toLocaleString()}`);
       } catch (e) {
         console.error('Failed to load draft:', e);
@@ -63,18 +60,17 @@ export default function ApplyLoan() {
 
   // Auto-save draft whenever data changes
   useEffect(() => {
-    if (!isComplete && (step1Data.full_name || step2Data.bvn || step3Data.product_type || guarantorData.full_name)) {
+    if (!isComplete && (step1Data.full_name || step2Data.bvn || step3Data.product_type)) {
       const draft: DraftData = {
         currentStep,
         step1Data,
         step2Data,
         step3Data,
-        guarantorData,
         lastSaved: new Date().toISOString(),
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     }
-  }, [currentStep, step1Data, step2Data, step3Data, guarantorData, isComplete]);
+  }, [currentStep, step1Data, step2Data, step3Data, isComplete]);
 
   const handleStep1Submit = (data: LoanStep1Data) => {
     setStep1Data(data);
@@ -89,11 +85,6 @@ export default function ApplyLoan() {
   const handleStep3Submit = (data: LoanStep3Data) => {
     setStep3Data(data);
     setCurrentStep(4);
-  };
-
-  const handleStep4Submit = (data: GuarantorData) => {
-    setGuarantorData(data);
-    setCurrentStep(5);
   };
 
   const handleBack = () => {
@@ -143,34 +134,13 @@ export default function ApplyLoan() {
           bank_account_number: step3Data.bank_account_number!,
           terms_accepted: true,
           is_draft: false,
-          current_step: 5,
+          current_step: 4,
           status: 'pending',
         })
         .select()
         .single();
 
       if (loanError) throw loanError;
-
-      // Create guarantor record
-      const { error: guarantorError } = await supabase
-        .from('guarantors')
-        .insert({
-          loan_application_id: loanApp.id,
-          full_name: guarantorData.full_name!,
-          phone_number: guarantorData.phone_number!,
-          address: guarantorData.address!,
-          organization: guarantorData.organization!,
-          position: guarantorData.position!,
-          employee_id: guarantorData.employee_id!,
-          bvn: guarantorData.bvn!,
-          salary: guarantorData.salary!,
-          allowances: guarantorData.allowances || 0,
-          other_income: guarantorData.other_income || 0,
-          signature_url: guarantorData.signature_url!,
-          acknowledged: true,
-        });
-
-      if (guarantorError) throw guarantorError;
 
       // Clear draft after successful submission
       localStorage.removeItem(DRAFT_KEY);
@@ -291,19 +261,10 @@ export default function ApplyLoan() {
           )}
 
           {currentStep === 4 && (
-            <Step4Guarantor
-              initialData={guarantorData}
-              onSubmit={handleStep4Submit}
-              onBack={handleBack}
-            />
-          )}
-
-          {currentStep === 5 && (
             <Step5Review
               step1Data={step1Data as LoanStep1Data}
               step2Data={step2Data as LoanStep2Data}
               step3Data={step3Data as LoanStep3Data}
-              guarantorData={guarantorData as GuarantorData}
               onSubmit={handleFinalSubmit}
               onBack={handleBack}
               isSubmitting={isSubmitting}
