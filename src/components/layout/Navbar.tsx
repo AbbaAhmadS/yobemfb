@@ -50,6 +50,9 @@ export function Navbar() {
             <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
               Home
             </Link>
+            <Link to="/products" className="text-muted-foreground hover:text-primary transition-colors">
+              Products
+            </Link>
             <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
               About Us
             </Link>
@@ -124,6 +127,13 @@ export function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 Home
+              </Link>
+              <Link
+                to="/products"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Products
               </Link>
               <Link
                 to="/about"
