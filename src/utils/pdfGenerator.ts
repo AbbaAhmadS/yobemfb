@@ -25,19 +25,6 @@ interface ApplicationData {
   decline_reason?: string | null;
 }
 
-interface GuarantorData {
-  full_name: string;
-  phone_number: string;
-  address: string;
-  organization: string;
-  position: string;
-  employee_id: string;
-  bvn: string;
-  salary: number;
-  allowances?: number;
-  other_income?: number;
-}
-
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-NG', {
     year: 'numeric',
@@ -94,7 +81,6 @@ function getStatusColor(status: string): string {
 
 export async function generateApplicationPDF(
   application: ApplicationData, 
-  guarantors: GuarantorData[],
   passportDataUrl?: string
 ): Promise<Blob> {
   // Create HTML content for PDF - User version with approved amount and decline reason
@@ -126,8 +112,6 @@ export async function generateApplicationPDF(
     .label { width: 180px; color: #666; }
     .value { flex: 1; font-weight: 500; }
     .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .guarantor { background: #f5f5f5; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
-    .guarantor-title { font-weight: bold; margin-bottom: 10px; color: #1a5d2e; }
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: white; }
     .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #666; border-top: 2px solid #1a5d2e; padding-top: 15px; }
     .footer-logo { height: 30px; margin-bottom: 5px; }
@@ -215,27 +199,6 @@ export async function generateApplicationPDF(
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">GUARANTOR(S)</div>
-    ${guarantors && guarantors.length > 0 ? guarantors.map((g, i) => `
-      <div class="guarantor">
-        <div class="guarantor-title">Guarantor ${i + 1}</div>
-        <div class="two-column">
-          <div class="row"><span class="label">Full Name:</span><span class="value">${g.full_name}</span></div>
-          <div class="row"><span class="label">Phone Number:</span><span class="value">${g.phone_number}</span></div>
-          <div class="row"><span class="label">Organization:</span><span class="value">${g.organization}</span></div>
-          <div class="row"><span class="label">Position:</span><span class="value">${g.position}</span></div>
-          <div class="row"><span class="label">Employee ID:</span><span class="value">${g.employee_id}</span></div>
-          <div class="row"><span class="label">BVN:</span><span class="value">${g.bvn}</span></div>
-          <div class="row"><span class="label">Monthly Salary:</span><span class="value">${formatCurrency(g.salary)}</span></div>
-          <div class="row"><span class="label">Allowances:</span><span class="value">${formatCurrency(g.allowances || 0)}</span></div>
-          <div class="row"><span class="label">Other Income:</span><span class="value">${formatCurrency(g.other_income || 0)}</span></div>
-        </div>
-        <div class="row" style="margin-top: 10px;"><span class="label">Address:</span><span class="value">${g.address}</span></div>
-      </div>
-    `).join('') : '<p>No guarantors on file.</p>'}
-  </div>
-
   <div class="sms-notice">
     <div class="sms-notice-text">
       <strong>Important:</strong> Please login to your loan application dashboard after 24-48 hours to check your loan status. 
@@ -274,12 +237,6 @@ export async function downloadApplicationPDF(
       throw new Error('Application not found');
     }
 
-    // Fetch guarantor data
-    const { data: guarantors } = await supabase
-      .from('guarantors')
-      .select('*')
-      .eq('loan_application_id', applicationId);
-
     // Get passport photo as data URL if available
     let passportDataUrl: string | undefined;
     if (application.passport_photo_url) {
@@ -304,7 +261,7 @@ export async function downloadApplicationPDF(
     }
 
     // Generate PDF
-    const pdfBlob = await generateApplicationPDF(application, guarantors || [], passportDataUrl);
+    const pdfBlob = await generateApplicationPDF(application, passportDataUrl);
 
     // Create download link and open in new window
     const url = window.URL.createObjectURL(pdfBlob);

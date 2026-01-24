@@ -104,25 +104,6 @@ export interface LoanApplication {
   updated_at: string;
 }
 
-export interface Guarantor {
-  id: string;
-  loan_application_id: string;
-  full_name: string;
-  salary: number;
-  allowances: number;
-  other_income: number;
-  employee_id: string;
-  bvn: string;
-  phone_number: string;
-  address: string;
-  organization: string;
-  position: string;
-  signature_url: string;
-  acknowledged: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface AdminAction {
   id: string;
   admin_user_id: string;
@@ -184,20 +165,6 @@ export const getSolarProductName = (productType: LoanProductType): string => {
 export const getSolarProductPrice = (productType: LoanProductType): number => {
   return SOLAR_PRODUCTS[productType].price;
 };
-
-export interface GuarantorData {
-  full_name: string;
-  phone_number: string;
-  address: string;
-  organization: string;
-  position: string;
-  employee_id: string;
-  bvn: string;
-  salary: number;
-  allowances?: number;
-  other_income?: number;
-  signature_url: string;
-}
 
 // Account opening form data - Updated with new fields
 export interface AccountFormData {

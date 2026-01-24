@@ -95,13 +95,6 @@ serve(async (req) => {
       throw new Error("Application not found");
     }
 
-    // Fetch guarantor data
-    const { data: guarantor } = await supabase
-      .from("guarantors")
-      .select("*")
-      .eq("loan_application_id", applicationId)
-      .single();
-
     const analysisPrompt = `Analyze this loan application and provide a risk assessment with recommendations:
 
 APPLICANT DETAILS:
@@ -117,17 +110,6 @@ LOAN DETAILS:
 - Repayment Period: ${application.repayment_period_months} months
 - YobeMFB Account Type: ${application.bank_name}
 
-GUARANTOR DETAILS:
-${guarantor ? `
-- Name: ${guarantor.full_name}
-- Organization: ${guarantor.organization}
-- Position: ${guarantor.position}
-- Employee ID: ${guarantor.employee_id}
-- Monthly Salary: ₦${guarantor.salary.toLocaleString()}
-- Allowances: ₦${(guarantor.allowances || 0).toLocaleString()}
-- Other Income: ₦${(guarantor.other_income || 0).toLocaleString()}
-` : 'No guarantor information available'}
-
 Please provide:
 1. Risk Level (Low, Medium, High)
 2. Key Observations (3-5 bullet points)
@@ -135,7 +117,7 @@ Please provide:
 4. Any red flags or concerns
 5. Approval recommendation (Approve, Conditional Approve, Further Review, Decline)
 
-Be concise and professional.`;
+ Be concise and professional.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
