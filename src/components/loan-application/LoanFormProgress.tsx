@@ -10,8 +10,7 @@ const steps: Step[] = [
   { number: 1, title: 'Basic Info' },
   { number: 2, title: 'Identification' },
   { number: 3, title: 'Loan Details' },
-  { number: 4, title: 'Guarantor' },
-  { number: 5, title: 'Review' },
+  { number: 4, title: 'Review' },
 ];
 
 interface LoanFormProgressProps {
