@@ -9,7 +9,7 @@ import { AdminSearchBar } from '@/components/admin/AdminSearchBar';
 import { MDAdminManagement } from '@/components/admin/MDAdminManagement';
 import { 
   LayoutDashboard, FileText, Users, LogOut, Moon, Sun,
-  CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard, BarChart3
+  CheckCircle, Clock, XCircle, AlertTriangle, Building2, CreditCard, BarChart3, Settings
 } from 'lucide-react';
 import { LoanApplication, ApplicationStatus, STATUS_LABELS, getSolarProductName } from '@/types/database';
 import { toast } from 'sonner';
@@ -210,6 +210,16 @@ export default function AdminDashboard() {
             >
               <Users className="h-4 w-4" />
               Admin Management
+            </Button>
+          )}
+          {role === 'managing_director' && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start gap-2"
+              onClick={() => navigate('/admin/tools')}
+            >
+              <Settings className="h-4 w-4" />
+              Admin Tools
             </Button>
           )}
         </nav>
