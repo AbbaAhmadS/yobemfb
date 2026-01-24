@@ -8,21 +8,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { computeMonthlyRepayment } from "@/lib/repayment";
+import type { SolarProductInfo } from "@/lib/solar-products";
 import { cn } from "@/lib/utils";
 import { ArrowRight, CalendarClock, CheckCircle, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
-
-type ProductInfo = {
-  id: "cola_1000" | "cola_2000";
-  title: string;
-  subtitle: string;
-  price: number;
-  imageSrc: string;
-  keyFeatures: string[];
-  includedComponents: string[];
-  whatItPowers: string[];
-  highlight?: string;
-};
 
 const formatAmount = (amount: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -36,7 +25,7 @@ export function SolarProductAccordionCard({
   product,
   recommended,
 }: {
-  product: ProductInfo;
+  product: SolarProductInfo;
   recommended?: boolean;
 }) {
   const [months, setMonths] = useState<12 | 18>(18);
