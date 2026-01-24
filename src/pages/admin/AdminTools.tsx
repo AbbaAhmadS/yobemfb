@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Trash2, Settings, Shield, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Trash2, Settings, Shield, AlertTriangle, HardDrive, Database } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,10 +31,22 @@ export default function AdminTools() {
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isRunningCleanup, setIsRunningCleanup] = useState(false);
+  const [storageStats, setStorageStats] = useState<{
+    totalFiles: number;
+    byBucket: Record<string, number>;
+    byStatus: Record<string, number>;
+  } | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     checkAccess();
   }, [user]);
+
+  useEffect(() => {
+    if (isMD) {
+      loadStorageStats();
+    }
+  }, [isMD]);
 
   const checkAccess = async () => {
     if (!user) {
@@ -85,6 +97,29 @@ export default function AdminTools() {
     } catch (error) {
       console.error('Failed to load settings:', error);
       toast.error('Failed to load retention policy settings');
+    }
+  };
+
+  const loadStorageStats = async () => {
+    setLoadingStats(true);
+    try {
+      // Call the storage stats function
+      const { data, error } = await supabase.rpc('get_storage_stats');
+
+      if (error) throw error;
+
+      const statsData = data as { totalFiles: number; byBucket: Record<string, number>; byStatus: Record<string, number> };
+
+      setStorageStats({
+        totalFiles: statsData.totalFiles || 0,
+        byBucket: statsData.byBucket || {},
+        byStatus: statsData.byStatus || {},
+      });
+    } catch (error) {
+      console.error('Failed to load storage stats:', error);
+      toast.error('Failed to load storage statistics');
+    } finally {
+      setLoadingStats(false);
     }
   };
 
@@ -179,6 +214,79 @@ export default function AdminTools() {
       </div>
 
       <div className="space-y-6">
+        {/* Storage Stats Card */}
+        <Card className="card-elevated">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HardDrive className="h-5 w-5 text-primary" />
+                <CardTitle>Storage Usage</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={loadStorageStats} disabled={loadingStats}>
+                {loadingStats ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
+            <CardDescription>
+              File storage statistics across all buckets and application statuses
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {loadingStats ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : storageStats ? (
+              <>
+                {/* Total Files */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Database className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Files</p>
+                      <p className="text-2xl font-bold">{storageStats.totalFiles.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Files by Bucket */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-sm">Files by Bucket</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(storageStats.byBucket).map(([bucket, count]) => (
+                      <div key={bucket} className="p-3 border rounded-lg">
+                        <p className="text-xs text-muted-foreground capitalize">{bucket.replace('-', ' ')}</p>
+                        <p className="text-lg font-semibold">{count.toLocaleString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Applications by Status */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-sm">Applications by Status</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(storageStats.byStatus).map(([status, count]) => (
+                      <div
+                        key={status}
+                        className="p-3 border rounded-lg bg-muted/30"
+                      >
+                        <p className="text-xs text-muted-foreground capitalize">{status.replace('_', ' ')}</p>
+                        <p className="text-lg font-semibold">{count.toLocaleString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No statistics available</p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Retention Policy Card */}
         <Card className="card-elevated">
           <CardHeader>

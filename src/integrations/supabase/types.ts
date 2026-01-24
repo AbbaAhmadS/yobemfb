@@ -619,6 +619,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_storage_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
