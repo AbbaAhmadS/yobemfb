@@ -3,14 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SignedImage } from '@/components/ui/signed-image';
-import { LoanStep1Data, LoanStep2Data, LoanStep3Data, GuarantorData, getSolarProductName, getSolarProductPrice } from '@/types/database';
-import { ArrowLeft, Send, User, FileText, Sun, Users, Loader2 } from 'lucide-react';
+import { LoanStep1Data, LoanStep2Data, LoanStep3Data, getSolarProductName, getSolarProductPrice } from '@/types/database';
+import { ArrowLeft, Send, User, FileText, Sun, Loader2 } from 'lucide-react';
 
 interface Step5Props {
   step1Data: LoanStep1Data;
   step2Data: LoanStep2Data;
   step3Data: LoanStep3Data;
-  guarantorData: GuarantorData;
   onSubmit: () => void;
   onBack: () => void;
   isSubmitting: boolean;
@@ -20,7 +19,6 @@ export function Step5Review({
   step1Data,
   step2Data,
   step3Data,
-  guarantorData,
   onSubmit,
   onBack,
   isSubmitting,
@@ -175,41 +173,6 @@ export function Step5Review({
           </CardContent>
         </Card>
 
-        {/* Guarantor */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Guarantor Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Full Name:</span>
-              <p className="font-medium">{guarantorData.full_name}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Phone:</span>
-              <p className="font-medium">{guarantorData.phone_number}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Organization:</span>
-              <p className="font-medium">{guarantorData.organization}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Position:</span>
-              <p className="font-medium">{guarantorData.position}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Monthly Salary:</span>
-              <p className="font-medium">{formatAmount(guarantorData.salary)}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">BVN:</span>
-              <p className="font-medium">{guarantorData.bvn}</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Terms & Conditions */}

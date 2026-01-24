@@ -69,7 +69,7 @@ serve(async (req) => {
  Key Information:
  - Yobe Microfinance Bank has been serving Yobe State and Local Governments civil servants for over 20 years
 - Loans are processed and disbursed at the last week of every month
-- Required documents: NIN, BVN, passport photograph, pay slip, guarantor details
+ - Required documents: NIN, BVN, passport photograph, pay slip
 - Loan amounts: ₦100,000 - ₦300,000, ₦300,000 - ₦600,000, ₦600,000 - ₦1,000,000, Above ₦1,000,000
  - Solar products:
    - Cola Solar 1000 Pro (₦630,000)

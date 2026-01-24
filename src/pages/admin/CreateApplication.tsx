@@ -10,9 +10,8 @@ import { LoanFormProgress } from '@/components/loan-application/LoanFormProgress
 import { Step1BasicInfo } from '@/components/loan-application/Step1BasicInfo';
 import { Step2Identification } from '@/components/loan-application/Step2Identification';
 import { Step3LoanDetails } from '@/components/loan-application/Step3LoanDetails';
-import { Step4Guarantor } from '@/components/loan-application/Step4Guarantor';
 import { Step5Review } from '@/components/loan-application/Step5Review';
-import { LoanStep1Data, LoanStep2Data, LoanStep3Data, GuarantorData } from '@/types/database';
+import { LoanStep1Data, LoanStep2Data, LoanStep3Data } from '@/types/database';
 
 export default function CreateApplication() {
   const navigate = useNavigate();
@@ -26,7 +25,6 @@ export default function CreateApplication() {
   const [step1Data, setStep1Data] = useState<Partial<LoanStep1Data>>({});
   const [step2Data, setStep2Data] = useState<Partial<LoanStep2Data>>({});
   const [step3Data, setStep3Data] = useState<Partial<LoanStep3Data>>({});
-  const [guarantorData, setGuarantorData] = useState<Partial<GuarantorData>>({});
 
   const handleStep1Submit = (data: LoanStep1Data) => {
     setStep1Data(data);
@@ -41,11 +39,6 @@ export default function CreateApplication() {
   const handleStep3Submit = (data: LoanStep3Data) => {
     setStep3Data(data);
     setCurrentStep(4);
-  };
-
-  const handleStep4Submit = (data: GuarantorData) => {
-    setGuarantorData(data);
-    setCurrentStep(5);
   };
 
   const handleBack = () => {
@@ -97,32 +90,13 @@ export default function CreateApplication() {
           bank_account_number: step3Data.bank_account_number!,
           terms_accepted: true,
           is_draft: false,
-          current_step: 5,
+          current_step: 4,
           status: 'pending',
         })
         .select()
         .single();
 
       if (loanError) throw loanError;
-
-      // Create guarantor record
-      const { error: guarantorError } = await supabase.from('guarantors').insert({
-        loan_application_id: loanApp.id,
-        full_name: guarantorData.full_name!,
-        phone_number: guarantorData.phone_number!,
-        address: guarantorData.address!,
-        organization: guarantorData.organization!,
-        position: guarantorData.position!,
-        employee_id: guarantorData.employee_id!,
-        bvn: guarantorData.bvn!,
-        salary: guarantorData.salary!,
-        allowances: guarantorData.allowances || 0,
-        other_income: guarantorData.other_income || 0,
-        signature_url: guarantorData.signature_url!,
-        acknowledged: true,
-      });
-
-      if (guarantorError) throw guarantorError;
 
       setApplicationId(newApplicationId);
       setIsComplete(true);
@@ -166,7 +140,6 @@ export default function CreateApplication() {
                 setStep1Data({});
                 setStep2Data({});
                 setStep3Data({});
-                setGuarantorData({});
               }}>
                 Create Another
               </Button>
@@ -204,15 +177,10 @@ export default function CreateApplication() {
           )}
 
           {currentStep === 4 && (
-            <Step4Guarantor initialData={guarantorData} onSubmit={handleStep4Submit} onBack={handleBack} />
-          )}
-
-          {currentStep === 5 && (
             <Step5Review
               step1Data={step1Data as LoanStep1Data}
               step2Data={step2Data as LoanStep2Data}
               step3Data={step3Data as LoanStep3Data}
-              guarantorData={guarantorData as GuarantorData}
               onSubmit={handleFinalSubmit}
               onBack={handleBack}
               isSubmitting={isSubmitting}

@@ -19,7 +19,6 @@ import {
   User, 
   FileText, 
   CreditCard, 
-  Users,
   CheckCircle,
   XCircle,
   Clock,
@@ -36,7 +35,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   LoanApplication, 
-  Guarantor, 
   ApplicationStatus, 
   AppRole,
   STATUS_LABELS,
@@ -66,7 +64,6 @@ export default function ApplicationDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [application, setApplication] = useState<LoanApplication | null>(null);
-  const [guarantor, setGuarantor] = useState<Guarantor | null>(null);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
@@ -116,17 +113,6 @@ export default function ApplicationDetail() {
 
       if (appError) throw appError;
       setApplication(appData as LoanApplication);
-
-      // Fetch guarantor
-      const { data: guarantorData } = await supabase
-        .from('guarantors')
-        .select('*')
-        .eq('loan_application_id', id)
-        .single();
-
-      if (guarantorData) {
-        setGuarantor(guarantorData as Guarantor);
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load application');
@@ -540,59 +526,6 @@ export default function ApplicationDetail() {
               </CardContent>
             </Card>
 
-            {/* Guarantor */}
-            {guarantor && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Users className="h-5 w-5 text-primary" />
-                    Guarantor Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Full Name:</span>
-                    <p className="font-medium">{guarantor.full_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Phone:</span>
-                    <p className="font-medium">{guarantor.phone_number}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Organization:</span>
-                    <p className="font-medium">{guarantor.organization}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Position:</span>
-                    <p className="font-medium">{guarantor.position}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Employee ID:</span>
-                    <p className="font-medium">{guarantor.employee_id}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Monthly Salary:</span>
-                    <p className="font-medium">{formatAmount(guarantor.salary)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Allowances:</span>
-                    <p className="font-medium">{formatAmount(guarantor.allowances || 0)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Other Income:</span>
-                    <p className="font-medium">{formatAmount(guarantor.other_income || 0)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">BVN:</span>
-                    <p className="font-medium">{guarantor.bvn}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Address:</span>
-                    <p className="font-medium">{guarantor.address}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -638,13 +571,6 @@ export default function ApplicationDetail() {
                       bucket="signatures"
                       label="Signature"
                     />
-                    {guarantor && (
-                      <SignedDocumentLink
-                        storedPath={guarantor.signature_url}
-                        bucket="signatures"
-                        label="Guarantor Signature"
-                      />
-                    )}
                   </>
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
