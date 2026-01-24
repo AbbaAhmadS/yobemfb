@@ -26,6 +26,7 @@ import CreateApplication from "./pages/admin/CreateApplication";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import OperationsAnalyticsDashboard from "./pages/admin/OperationsAnalyticsDashboard";
+import AdminTools from "./pages/admin/AdminTools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -96,6 +97,11 @@ const App = () => (
             <Route path="/admin/application/:id" element={
               <ProtectedRoute requireAdmin>
                 <ApplicationDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/tools" element={
+              <ProtectedRoute requireAdmin allowedRoles={['managing_director']}>
+                <AdminTools />
               </ProtectedRoute>
             } />
             
