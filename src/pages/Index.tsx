@@ -165,6 +165,31 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Solar Products - DOCX details + repayment calculator */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
+              <Battery className="h-4 w-4" />
+              Renewable Energy Solutions
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Our Solar Products</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Compare full features, included components, and what each system can power—then see your estimated monthly repayment for 12 or 18 months.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
+            <SolarProductAccordionCard product={solarProducts[0]} />
+            <SolarProductAccordionCard product={solarProducts[1]} recommended />
+          </div>
+
+          <div className="max-w-6xl mx-auto mt-10">
+            <SolarComparisonTable />
+          </div>
+        </div>
+      </section>
+
       {/* AI Assistant Banner */}
       <section className="py-8 bg-primary/5 border-y border-primary/10">
         <div className="container mx-auto px-4">
@@ -206,31 +231,6 @@ export default function Index() {
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Solar Products - DOCX details + repayment calculator */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-              <Battery className="h-4 w-4" />
-              Renewable Energy Solutions
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Our Solar Products</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Compare full features, included components, and what each system can power—then see your estimated monthly repayment for 12 or 18 months.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
-            <SolarProductAccordionCard product={solarProducts[0]} />
-            <SolarProductAccordionCard product={solarProducts[1]} recommended />
-          </div>
-
-          <div className="max-w-6xl mx-auto mt-10">
-            <SolarComparisonTable />
           </div>
         </div>
       </section>

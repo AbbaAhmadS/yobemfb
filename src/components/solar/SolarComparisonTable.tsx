@@ -24,6 +24,21 @@ const Bullet = ({ children }: { children: React.ReactNode }) => (
   </li>
 );
 
+const MobileSpecRow = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => (
+  <div className="flex items-start justify-between gap-4 py-3 border-b last:border-b-0">
+    <div className="text-sm font-medium text-foreground">{label}</div>
+    <div className="text-sm text-muted-foreground text-right">
+      {value ?? <Minus className="h-4 w-4 text-muted-foreground inline-block" />}
+    </div>
+  </div>
+);
+
 export function SolarComparisonTable() {
   const rows: ComparisonRow[] = [
     {
@@ -79,7 +94,35 @@ export function SolarComparisonTable() {
         <CardTitle className="text-xl">Compare the two systems</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-hidden rounded-lg border bg-card">
+        {/* Mobile: stacked product cards */}
+        <div className="md:hidden space-y-6">
+          <div className="rounded-lg border bg-card">
+            <div className="px-4 py-3 border-b bg-muted/40">
+              <div className="text-sm font-semibold text-foreground">Cola Solar 1000 Pro</div>
+              <div className="text-xs text-muted-foreground">Best for essential home power</div>
+            </div>
+            <div className="px-4">
+              {rows.map((row) => (
+                <MobileSpecRow key={`m-1000-${row.label}`} label={row.label} value={row.cola1000} />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-card">
+            <div className="px-4 py-3 border-b bg-muted/40">
+              <div className="text-sm font-semibold text-foreground">Cola Solar 2000</div>
+              <div className="text-xs text-muted-foreground">Best for full household power</div>
+            </div>
+            <div className="px-4">
+              {rows.map((row) => (
+                <MobileSpecRow key={`m-2000-${row.label}`} label={row.label} value={row.cola2000} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop/tablet: side-by-side comparison grid */}
+        <div className="hidden md:block overflow-hidden rounded-lg border bg-card">
           <div className="grid grid-cols-12 border-b bg-muted/40">
             <div className="col-span-4">
               <HeaderCell>Specification</HeaderCell>
@@ -94,15 +137,15 @@ export function SolarComparisonTable() {
 
           {rows.map((row) => (
             <div key={row.label} className="grid grid-cols-12 border-b last:border-b-0">
-              <div className="col-span-12 md:col-span-4">
+              <div className="col-span-4">
                 <Cell>
                   <span className="font-medium">{row.label}</span>
                 </Cell>
               </div>
-              <div className="col-span-12 md:col-span-4">
+              <div className="col-span-4">
                 <Cell>{row.cola1000 ?? <Minus className="h-4 w-4 text-muted-foreground" />}</Cell>
               </div>
-              <div className="col-span-12 md:col-span-4">
+              <div className="col-span-4">
                 <Cell>{row.cola2000 ?? <Minus className="h-4 w-4 text-muted-foreground" />}</Cell>
               </div>
             </div>
