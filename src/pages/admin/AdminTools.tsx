@@ -30,6 +30,7 @@ export default function AdminTools() {
   const [retentionDays, setRetentionDays] = useState(5);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [isRunningCleanup, setIsRunningCleanup] = useState(false);
 
   useEffect(() => {
     checkAccess();
@@ -109,6 +110,28 @@ export default function AdminTools() {
       toast.error('Failed to update retention policy');
     } finally {
       setIsUpdatingSettings(false);
+    }
+  };
+
+  const handleRunCleanupNow = async () => {
+    setIsRunningCleanup(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cleanup-declined-uploads');
+
+      if (error) throw error;
+
+      if (data.deletedFiles === 0) {
+        toast.info('No declined uploads found to clean up');
+      } else {
+        toast.success(
+          `Cleanup completed: ${data.deletedFiles} file(s) deleted from ${data.declinedLoans || 0} declined loan(s) and ${data.declinedAccounts || 0} declined account application(s)`
+        );
+      }
+    } catch (error) {
+      console.error('Manual cleanup error:', error);
+      toast.error('Failed to run cleanup');
+    } finally {
+      setIsRunningCleanup(false);
     }
   };
 
@@ -217,6 +240,22 @@ export default function AdminTools() {
             <Button onClick={handleUpdateRetentionPolicy} disabled={isUpdatingSettings}>
               {isUpdatingSettings ? 'Updating...' : 'Save Settings'}
             </Button>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <h3 className="font-semibold">Manual Cleanup</h3>
+              <p className="text-sm text-muted-foreground">
+                Trigger the cleanup process immediately instead of waiting for the scheduled run (every 6 hours).
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={handleRunCleanupNow} 
+                disabled={isRunningCleanup || !retentionEnabled}
+              >
+                {isRunningCleanup ? 'Running Cleanup...' : 'Run Cleanup Now'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
