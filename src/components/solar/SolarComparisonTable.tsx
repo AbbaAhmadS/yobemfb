@@ -98,7 +98,7 @@ export function SolarComparisonTable() {
         <div className="md:hidden space-y-6">
           <div className="rounded-lg border bg-card">
             <div className="px-4 py-3 border-b bg-muted/40">
-              <div className="text-sm font-semibold text-foreground">Cola Solar 1000 Pro</div>
+              <div className="text-sm font-semibold text-foreground">Easy Solar All-in-One 1000</div>
               <div className="text-xs text-muted-foreground">Best for essential home power</div>
             </div>
             <div className="px-4">
@@ -110,7 +110,7 @@ export function SolarComparisonTable() {
 
           <div className="rounded-lg border bg-card">
             <div className="px-4 py-3 border-b bg-muted/40">
-              <div className="text-sm font-semibold text-foreground">Cola Solar 2000</div>
+              <div className="text-sm font-semibold text-foreground">Smart Solar 2000</div>
               <div className="text-xs text-muted-foreground">Best for full household power</div>
             </div>
             <div className="px-4">
@@ -128,10 +128,10 @@ export function SolarComparisonTable() {
               <HeaderCell>Specification</HeaderCell>
             </div>
             <div className="col-span-4">
-              <HeaderCell>Cola Solar 1000 Pro</HeaderCell>
+              <HeaderCell>Easy Solar All-in-One 1000</HeaderCell>
             </div>
             <div className="col-span-4">
-              <HeaderCell>Cola Solar 2000</HeaderCell>
+              <HeaderCell>Smart Solar 2000</HeaderCell>
             </div>
           </div>
 
@@ -153,7 +153,7 @@ export function SolarComparisonTable() {
         </div>
 
         <p className="text-xs text-muted-foreground mt-3">
-          Tip: If you need to run heavier appliances (iron/heater) or more devices at once, Cola Solar 2000 is the better fit.
+          Tip: If you need to run heavier appliances (iron/heater) or more devices at once, Smart Solar 2000 is the better fit.
         </p>
       </CardContent>
     </Card>

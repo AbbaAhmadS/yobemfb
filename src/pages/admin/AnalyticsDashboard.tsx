@@ -534,7 +534,7 @@ export default function AnalyticsDashboard() {
         <div className="grid md:grid-cols-2 gap-4 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Cola Solar 1000 Pro (1kWh)</CardTitle>
+              <CardTitle className="text-base">Easy Solar All-in-One 1000 (1kWh)</CardTitle>
               <CardDescription>Totals within selected date range</CardDescription>
             </CardHeader>
             <CardContent>
@@ -553,7 +553,7 @@ export default function AnalyticsDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Cola Solar 2000 (2kWh)</CardTitle>
+              <CardTitle className="text-base">Smart Solar 2000 (2kWh)</CardTitle>
               <CardDescription>Totals within selected date range</CardDescription>
             </CardHeader>
             <CardContent>
@@ -614,8 +614,8 @@ export default function AnalyticsDashboard() {
                   <YAxis allowDecimals={false} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="cola1000Count" name="Cola Solar 1000 Pro" fill="hsl(var(--primary))" />
-                  <Bar dataKey="cola2000Count" name="Cola Solar 2000" fill="hsl(var(--secondary))" />
+                  <Bar dataKey="cola1000Count" name="Easy Solar 1000" fill="hsl(var(--primary))" />
+                  <Bar dataKey="cola2000Count" name="Smart Solar 2000" fill="hsl(var(--secondary))" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -634,8 +634,8 @@ export default function AnalyticsDashboard() {
                   <YAxis tickFormatter={(v) => `${Number(v) / 1000}k`} />
                   <Tooltip formatter={(v: any) => formatAmount(Number(v))} />
                   <Legend />
-                  <Bar dataKey="cola1000Amount" name="1000 Pro amount" fill="hsl(var(--accent))" />
-                  <Bar dataKey="cola2000Amount" name="2000 amount" fill="hsl(var(--info))" />
+                  <Bar dataKey="cola1000Amount" name="Easy Solar 1000 amount" fill="hsl(var(--accent))" />
+                  <Bar dataKey="cola2000Amount" name="Smart Solar 2000 amount" fill="hsl(var(--info))" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

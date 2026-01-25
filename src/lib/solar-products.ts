@@ -1,7 +1,7 @@
-import colaSolar2000Image from "@/assets/cola-solar-2000.jpg";
-import colaSolar1000Image from "@/assets/cola-solar-1000.jpg";
+import smartSolar2000Image from "@/assets/smart-solar-combo.jpg";
+import easySolar1000Image from "@/assets/easy-solar-combo.jpg";
 
-export type SolarProductId = "cola_1000" | "cola_2000";
+export type SolarProductId = "easy_1000" | "smart_2000";
 
 export type SolarProductInfo = {
   id: SolarProductId;
@@ -21,11 +21,11 @@ export type SolarProductInfo = {
 
 export const solarProducts: SolarProductInfo[] = [
   {
-    id: "cola_1000",
-    title: "Cola Solar 1000 Pro",
+    id: "easy_1000",
+    title: "Easy Solar All-in-One 1000",
     subtitle: "All-in-One Solar Power System (1 kWh)",
     price: 630000,
-    imageSrc: colaSolar1000Image,
+    imageSrc: easySolar1000Image,
     warranty: {
       durationLabel: "5-year warranty",
       summary:
@@ -52,11 +52,11 @@ export const solarProducts: SolarProductInfo[] = [
     highlight: "Ideal for everyday home essentials.",
   },
   {
-    id: "cola_2000",
-    title: "Cola Solar 2000",
+    id: "smart_2000",
+    title: "Smart Solar 2000",
     subtitle: "All-in-One Solar Power System (2 kWh)",
-    price: 1232000,
-    imageSrc: colaSolar2000Image,
+    price: 1196000,
+    imageSrc: smartSolar2000Image,
     warranty: {
       durationLabel: "5-year warranty",
       summary:

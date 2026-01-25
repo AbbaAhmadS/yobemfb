@@ -25,8 +25,8 @@ function generateAdminPDFHTML(application: any, guarantors: any[], passportPhoto
 
   const getSolarProductName = (productType: string) => {
     const products: Record<string, string> = {
-      'short_term': 'Cola Solar 1000 Pro (1kWh) - ₦630,000',
-      'long_term': 'Cola Solar 2000 (2kWh) - ₦1,232,000'
+      'short_term': 'Easy Solar All-in-One 1000 (1kWh) - ₦630,000',
+      'long_term': 'Smart Solar 2000 (2kWh) - ₦1,196,000'
     };
     return products[productType] || productType;
   };
