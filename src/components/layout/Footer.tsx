@@ -51,8 +51,8 @@ export function Footer() {
           <div>
             <h3 className="font-display font-semibold text-lg mb-4">Our Services</h3>
             <ul className="space-y-2">
-              <li className="text-sm text-primary-foreground/80">Cola Solar 1000 Pro</li>
-              <li className="text-sm text-primary-foreground/80">Cola Solar 2000</li>
+              <li className="text-sm text-primary-foreground/80">Easy Solar All-in-One 1000</li>
+              <li className="text-sm text-primary-foreground/80">Smart Solar 2000</li>
               <li className="text-sm text-primary-foreground/80">Savings Account</li>
               <li className="text-sm text-primary-foreground/80">Current Account</li>
               <li className="text-sm text-primary-foreground/80">Corporate Account</li>

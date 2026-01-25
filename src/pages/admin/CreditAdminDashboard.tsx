@@ -368,7 +368,7 @@ export default function CreditAdminDashboard() {
         <div className="grid lg:grid-cols-2 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Cola Solar 1000 Pro (1kWh)</CardTitle>
+              <CardTitle className="text-base">Easy Solar All-in-One 1000 (1kWh)</CardTitle>
               <CardDescription>Within selected date range</CardDescription>
             </CardHeader>
             <CardContent>
@@ -387,7 +387,7 @@ export default function CreditAdminDashboard() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Cola Solar 2000 (2kWh)</CardTitle>
+              <CardTitle className="text-base">Smart Solar 2000 (2kWh)</CardTitle>
               <CardDescription>Within selected date range</CardDescription>
             </CardHeader>
             <CardContent>

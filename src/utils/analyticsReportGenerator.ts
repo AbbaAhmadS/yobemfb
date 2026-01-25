@@ -116,11 +116,11 @@ export const generateAnalyticsReportHtml = (params: {
       <div class="kpi-value">${formatAmount(params.totalAmount)}</div>
     </div>
     <div class="card">
-      <div class="kpi-label">Cola Solar 1000 Pro</div>
+      <div class="kpi-label">Easy Solar All-in-One 1000</div>
       <div class="kpi-value">${params.cola1000Count} • ${formatAmount(params.cola1000Amount)}</div>
     </div>
     <div class="card">
-      <div class="kpi-label">Cola Solar 2000</div>
+      <div class="kpi-label">Smart Solar 2000</div>
       <div class="kpi-value">${params.cola2000Count} • ${formatAmount(params.cola2000Amount)}</div>
     </div>
   </div>
