@@ -53,10 +53,33 @@ export function ApplicationsTable({ role, userId }: ApplicationsTableProps) {
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeApprovalRoles, setActiveApprovalRoles] = useState<{
+    audit: boolean;
+    coo: boolean;
+  }>({ audit: true, coo: true });
 
   useEffect(() => {
     fetchApplications();
+    fetchActiveRoles();
   }, []);
+
+  const fetchActiveRoles = async () => {
+    try {
+      const { data: activeRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .in('role', ['audit', 'coo'])
+        .eq('is_active', true);
+
+      const activeRolesSet = new Set(activeRoles?.map(r => r.role) || []);
+      setActiveApprovalRoles({
+        audit: activeRolesSet.has('audit'),
+        coo: activeRolesSet.has('coo'),
+      });
+    } catch (error) {
+      console.error('Error fetching active roles:', error);
+    }
+  };
 
   const fetchApplications = async () => {
     setIsLoading(true);
@@ -151,13 +174,18 @@ export function ApplicationsTable({ role, userId }: ApplicationsTableProps) {
   };
 
   const canApprove = (app: LoanApplication): boolean => {
+    const isTerminalStatus = app.status === 'approved' || app.status === 'declined';
+    if (isTerminalStatus) return false;
+
     switch (role) {
       case 'credit':
-        return !app.credit_approval && app.status !== 'approved' && app.status !== 'declined';
+        return !app.credit_approval;
       case 'audit':
-        return app.credit_approval === true && !app.audit_approval && app.status !== 'approved' && app.status !== 'declined';
+        return app.credit_approval === true && !app.audit_approval;
       case 'coo':
-        return app.audit_approval === true && !app.coo_approval && app.status !== 'approved' && app.status !== 'declined';
+        // COO can approve if credit approved AND (audit approved OR audit inactive)
+        const auditCleared = app.audit_approval === true || !activeApprovalRoles.audit;
+        return app.credit_approval === true && auditCleared && !app.coo_approval;
       default:
         return false;
     }

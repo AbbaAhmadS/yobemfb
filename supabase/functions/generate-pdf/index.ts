@@ -7,7 +7,12 @@ const corsHeaders = {
 };
 
 // Generate HTML content for admin PDF with full details
-function generateAdminPDFHTML(application: any, guarantors: any[], passportPhotoBase64: string | null): string {
+function generateAdminPDFHTML(
+  application: any, 
+  guarantors: any[], 
+  passportPhotoBase64: string | null,
+  activeApprovalRoles: { audit: boolean; coo: boolean }
+): string {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-NG', {
       year: 'numeric',
@@ -336,15 +341,17 @@ function generateAdminPDFHTML(application: any, guarantors: any[], passportPhoto
           <div class="approval-status">${application.credit_approval ? '✓ Approved' : application.credit_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
           ${application.credit_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.credit_approved_at)}</div>` : ''}
         </div>
-        <div class="approval-item ${application.audit_approval ? 'approved' : application.audit_approval === false ? 'declined' : 'pending'}">
+        <div class="approval-item ${!activeApprovalRoles.audit ? 'pending' : application.audit_approval ? 'approved' : application.audit_approval === false ? 'declined' : 'pending'}" ${!activeApprovalRoles.audit ? 'style="opacity: 0.5;"' : ''}>
           <div class="approval-label">Audit</div>
-          <div class="approval-status">${application.audit_approval ? '✓ Approved' : application.audit_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
-          ${application.audit_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.audit_approved_at)}</div>` : ''}
+          <div class="approval-status">${!activeApprovalRoles.audit ? '⊘ Skipped' : application.audit_approval ? '✓ Approved' : application.audit_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
+          ${activeApprovalRoles.audit && application.audit_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.audit_approved_at)}</div>` : ''}
+          ${!activeApprovalRoles.audit ? `<div style="font-size: 9px; color: #6b7280;">Role Inactive</div>` : ''}
         </div>
-        <div class="approval-item ${application.coo_approval ? 'approved' : application.coo_approval === false ? 'declined' : 'pending'}">
+        <div class="approval-item ${!activeApprovalRoles.coo ? 'pending' : application.coo_approval ? 'approved' : application.coo_approval === false ? 'declined' : 'pending'}" ${!activeApprovalRoles.coo ? 'style="opacity: 0.5;"' : ''}>
           <div class="approval-label">COO</div>
-          <div class="approval-status">${application.coo_approval ? '✓ Approved' : application.coo_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
-          ${application.coo_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.coo_approved_at)}</div>` : ''}
+          <div class="approval-status">${!activeApprovalRoles.coo ? '⊘ Skipped' : application.coo_approval ? '✓ Approved' : application.coo_approval === false ? '✗ Declined' : '⏳ Pending'}</div>
+          ${activeApprovalRoles.coo && application.coo_approved_at ? `<div style="font-size: 9px; color: #6b7280;">${formatDate(application.coo_approved_at)}</div>` : ''}
+          ${!activeApprovalRoles.coo ? `<div style="font-size: 9px; color: #6b7280;">Role Inactive</div>` : ''}
         </div>
       </div>
     </div>
@@ -459,6 +466,19 @@ serve(async (req) => {
       console.error('Error fetching guarantors:', guarError);
     }
 
+    // Fetch active approval chain roles (audit and coo)
+    const { data: activeRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .in('role', ['audit', 'coo'])
+      .eq('is_active', true);
+
+    const activeRolesSet = new Set(activeRoles?.map((r: any) => r.role) || []);
+    const activeApprovalRoles = {
+      audit: activeRolesSet.has('audit'),
+      coo: activeRolesSet.has('coo'),
+    };
+
     // Fetch passport photo and convert to base64
     let passportPhotoBase64: string | null = null;
     if (application.passport_photo_url) {
@@ -485,7 +505,7 @@ serve(async (req) => {
     }
 
     // Generate HTML content
-    const htmlContent = generateAdminPDFHTML(application, guarantors || [], passportPhotoBase64);
+    const htmlContent = generateAdminPDFHTML(application, guarantors || [], passportPhotoBase64, activeApprovalRoles);
 
     // Return as HTML with proper headers for PDF printing
     return new Response(htmlContent, {
