@@ -1,4 +1,5 @@
 import type { LoanApplication, LoanProductType } from "@/types/database";
+import { getSolarProductPrice } from "@/types/database";
 
 type ProductStats = {
   count: number;
@@ -24,7 +25,8 @@ export const computeSolarLoanBreakdown = (
   };
 
   return loans.reduce((acc, loan) => {
-    const amount = loan.specific_amount || 0;
+    // Use fixed product price instead of specific_amount to ensure correct pricing
+    const amount = getSolarProductPrice(loan.product_type);
     acc.totalCount += 1;
     acc.totalAmount += amount;
 
