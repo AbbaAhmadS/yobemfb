@@ -30,6 +30,7 @@ import {
   Eye,
   Lock,
   Banknote,
+  MinusCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -80,6 +81,12 @@ export default function ApplicationDetail() {
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('');
 
+  // Active admin roles in approval chain
+  const [activeApprovalRoles, setActiveApprovalRoles] = useState<{
+    audit: boolean;
+    coo: boolean;
+  }>({ audit: true, coo: true });
+
   // Check if user can view uploaded documents (only Credit Department)
   const canViewDocuments = userRole === 'credit';
 
@@ -103,6 +110,19 @@ export default function ApplicationDetail() {
       if (roleData) {
         setUserRole(roleData.role as AppRole);
       }
+
+      // Fetch active approval chain roles (audit and coo)
+      const { data: activeRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .in('role', ['audit', 'coo'])
+        .eq('is_active', true);
+
+      const activeRolesSet = new Set(activeRoles?.map(r => r.role) || []);
+      setActiveApprovalRoles({
+        audit: activeRolesSet.has('audit'),
+        coo: activeRolesSet.has('coo'),
+      });
 
       // Fetch application
       const { data: appData, error: appError } = await supabase
@@ -199,7 +219,26 @@ export default function ApplicationDetail() {
     setIsUpdating(true);
     try {
       const updateData: Record<string, unknown> = {};
-      let newStatus: ApplicationStatus = 'under_review';
+      
+      // Determine if this approval should be final based on active roles
+      // Approval chain: Credit -> Audit (if active) -> COO (if active)
+      const isFinalApproval = (): boolean => {
+        switch (userRole) {
+          case 'credit':
+            // Credit is final only if both Audit and COO are inactive
+            return !activeApprovalRoles.audit && !activeApprovalRoles.coo;
+          case 'audit':
+            // Audit is final only if COO is inactive
+            return !activeApprovalRoles.coo;
+          case 'coo':
+            // COO is always final when active
+            return true;
+          default:
+            return false;
+        }
+      };
+      
+      const newStatus: ApplicationStatus = isFinalApproval() ? 'approved' : 'under_review';
 
       switch (userRole) {
         case 'credit':
@@ -219,7 +258,6 @@ export default function ApplicationDetail() {
           updateData.coo_approval = true;
           updateData.coo_approved_by = user.id;
           updateData.coo_approved_at = new Date().toISOString();
-          newStatus = 'approved';
           break;
       }
 
@@ -321,14 +359,26 @@ export default function ApplicationDetail() {
 
   const canApprove = (): boolean => {
     if (!application || !userRole) return false;
+    const isTerminalStatus = application.status === 'approved' || application.status === 'declined';
+    if (isTerminalStatus) return false;
 
     switch (userRole) {
       case 'credit':
-        return !application.credit_approval && application.status !== 'approved' && application.status !== 'declined';
+        // Credit can approve if not already approved
+        return !application.credit_approval;
       case 'audit':
-        return application.credit_approval === true && !application.audit_approval && application.status !== 'approved' && application.status !== 'declined';
+        // Audit can approve only if:
+        // 1. Credit has approved
+        // 2. Audit hasn't approved yet
+        // 3. Audit role is active (otherwise they shouldn't be logged in anyway)
+        return application.credit_approval === true && !application.audit_approval;
       case 'coo':
-        return application.audit_approval === true && !application.coo_approval && application.status !== 'approved' && application.status !== 'declined';
+        // COO can approve if:
+        // 1. Credit has approved
+        // 2. Either Audit has approved OR Audit is inactive (skipped)
+        // 3. COO hasn't approved yet
+        const auditCleared = application.audit_approval === true || !activeApprovalRoles.audit;
+        return application.credit_approval === true && auditCleared && !application.coo_approval;
       default:
         return false;
     }
@@ -606,29 +656,47 @@ export default function ApplicationDetail() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-3 ${!activeApprovalRoles.audit ? 'opacity-50' : ''}`}>
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    !activeApprovalRoles.audit ? 'bg-muted-foreground/20' :
                     application.audit_approval ? 'bg-success text-success-foreground' : 'bg-muted'
                   }`}>
-                    {application.audit_approval ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                    {!activeApprovalRoles.audit ? (
+                      <MinusCircle className="h-4 w-4" />
+                    ) : application.audit_approval ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Clock className="h-4 w-4" />
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-sm">Internal Audit</p>
                     <p className="text-xs text-muted-foreground">
-                      {application.audit_approval ? 'Approved' : 'Pending'}
+                      {!activeApprovalRoles.audit ? (
+                        <span className="text-muted-foreground">Skipped (Inactive)</span>
+                      ) : application.audit_approval ? 'Approved' : 'Pending'}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-3 ${!activeApprovalRoles.coo ? 'opacity-50' : ''}`}>
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    !activeApprovalRoles.coo ? 'bg-muted-foreground/20' :
                     application.coo_approval ? 'bg-success text-success-foreground' : 'bg-muted'
                   }`}>
-                    {application.coo_approval ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                    {!activeApprovalRoles.coo ? (
+                      <MinusCircle className="h-4 w-4" />
+                    ) : application.coo_approval ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Clock className="h-4 w-4" />
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-sm">COO</p>
                     <p className="text-xs text-muted-foreground">
-                      {application.coo_approval ? 'Approved' : 'Pending'}
+                      {!activeApprovalRoles.coo ? (
+                        <span className="text-muted-foreground">Skipped (Inactive)</span>
+                      ) : application.coo_approval ? 'Approved' : 'Pending'}
                     </p>
                   </div>
                 </div>
