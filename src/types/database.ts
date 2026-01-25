@@ -1,10 +1,9 @@
 // Custom type definitions for the database
-export type AppRole = 'credit' | 'audit' | 'coo' | 'operations' | 'managing_director';
+export type AppRole = 'credit' | 'audit' | 'coo' | 'managing_director';
 export type ApplicationStatus = 'pending' | 'under_review' | 'approved' | 'declined' | 'flagged';
 export type LoanProductType = 'short_term' | 'long_term';
 export type ApplicationType = 'internal' | 'external';
 export type LoanAmountRange = '100k_300k' | '300k_600k' | '600k_1m' | 'above_1m';
-export type AccountType = 'savings' | 'current' | 'corporate';
 
 export interface Profile {
   id: string;
@@ -27,39 +26,6 @@ export interface UserRole {
   created_at: string;
 }
 
-export interface AccountApplication {
-  id: string;
-  application_id: string;
-  user_id: string;
-  passport_photo_url: string;
-  account_type: AccountType;
-  full_name: string;
-  nin: string;
-  bvn: string;
-  phone_number: string;
-  address: string;
-  nin_document_url: string;
-  signature_url: string;
-  // New fields
-  state?: string;
-  local_government?: string;
-  date_of_birth?: string;
-  next_of_kin_name?: string;
-  next_of_kin_address?: string;
-  next_of_kin_phone?: string;
-  // Legacy referee fields (for backward compatibility)
-  referee1_name: string;
-  referee1_phone: string;
-  referee1_address: string;
-  referee2_name: string;
-  referee2_phone: string;
-  referee2_address: string;
-  status: ApplicationStatus;
-  notes: string | null;
-  decline_reason?: string | null;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface LoanApplication {
   id: string;
@@ -166,24 +132,6 @@ export const getSolarProductPrice = (productType: LoanProductType): number => {
   return SOLAR_PRODUCTS[productType].price;
 };
 
-// Account opening form data - Updated with new fields
-export interface AccountFormData {
-  passport_photo_url: string;
-  full_name: string;
-  phone_number: string;
-  state: string;
-  local_government: string;
-  address: string;
-  date_of_birth: string;
-  bvn: string;
-  nin: string;
-  nin_document_url: string;
-  next_of_kin_name: string;
-  next_of_kin_address: string;
-  next_of_kin_phone: string;
-  signature_url: string;
-  account_type: AccountType;
-}
 
 export const LOAN_AMOUNT_LABELS: Record<LoanAmountRange, string> = {
   '100k_300k': '₦100,000 - ₦300,000',
@@ -204,12 +152,5 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   credit: 'Credit Department',
   audit: 'Internal Audit',
   coo: 'Chief Operations Officer',
-  operations: 'Account Opening Department',
   managing_director: 'Managing Director',
-};
-
-export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  savings: 'Savings Account',
-  current: 'Current Account',
-  corporate: 'Corporate Account',
 };
