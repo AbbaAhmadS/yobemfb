@@ -10,7 +10,6 @@ const ADMIN_ROLES = [
   "credit",
   "audit",
   "coo",
-  "operations",
   "managing_director",
 ] as const;
 
@@ -125,7 +124,6 @@ serve(async (req) => {
     };
 
     const deletedLoanApps = await deleteByUserId("loan_applications");
-    const deletedAccountApps = await deleteByUserId("account_applications");
 
     // Remove any access logs tied to those profiles/users
     const { data: logsData, error: logsError } = await adminClient
@@ -169,7 +167,6 @@ serve(async (req) => {
       purgedUsers: purgeUserIds.length,
       deletedAuthUsers,
       deletedLoanApps,
-      deletedAccountApps,
       deletedProfiles: (profilesDeleted ?? []).length,
       deletedProfileAccessLogs: (logsData ?? []).length,
       deletedRoles: (rolesData ?? []).length,

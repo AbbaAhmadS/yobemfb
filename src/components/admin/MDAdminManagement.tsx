@@ -133,7 +133,7 @@ export function MDAdminManagement() {
     try {
       const { error } = await supabase
         .from('user_roles')
-        .update({ role: newRole as 'credit' | 'audit' | 'coo' | 'operations' | 'managing_director' })
+        .update({ role: newRole as 'credit' | 'audit' | 'coo' | 'managing_director' })
         .eq('id', selectedAdmin.id);
 
       if (error) throw error;
@@ -171,7 +171,6 @@ export function MDAdminManagement() {
       credit: 'Credit Department',
       audit: 'Internal Audit',
       coo: 'Chief Operations Officer',
-      operations: 'Operations Department',
       managing_director: 'Managing Director'
     };
     return labels[role] || role;
@@ -182,8 +181,7 @@ export function MDAdminManagement() {
       managing_director: 'bg-primary text-primary-foreground',
       coo: 'bg-purple-500 text-white',
       audit: 'bg-orange-500 text-white',
-      credit: 'bg-blue-500 text-white',
-      operations: 'bg-green-500 text-white'
+      credit: 'bg-blue-500 text-white'
     };
     return classes[role] || 'bg-muted';
   };
@@ -356,7 +354,6 @@ export function MDAdminManagement() {
               <SelectContent>
                 <SelectItem value="credit">Credit Department</SelectItem>
                 <SelectItem value="audit">Internal Audit</SelectItem>
-                <SelectItem value="operations">Operations Department</SelectItem>
                 <SelectItem value="coo">Chief Operations Officer</SelectItem>
                 <SelectItem value="managing_director">Managing Director</SelectItem>
               </SelectContent>
