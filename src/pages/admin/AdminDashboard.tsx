@@ -15,7 +15,7 @@ import { LoanApplication, ApplicationStatus, STATUS_LABELS, getSolarProductName 
 import { toast } from 'sonner';
 import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 
-type AdminRole = 'credit' | 'audit' | 'coo' | 'operations' | 'managing_director';
+type AdminRole = 'credit' | 'audit' | 'coo' | 'managing_director';
 
 const statusConfig: Record<ApplicationStatus, { icon: React.ElementType; className: string }> = {
   pending: { icon: Clock, className: 'status-pending' },
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (role && role !== 'credit' && role !== 'operations') {
+    if (role && role !== 'credit') {
       fetchApplications();
     }
   }, [role]);
@@ -120,7 +120,6 @@ export default function AdminDashboard() {
       credit: 'Credit Department',
       audit: 'Internal Audit',
       coo: 'Chief Operations Officer',
-      operations: 'Account Opening Department',
       managing_director: 'Managing Director',
     };
     return labels[role];
