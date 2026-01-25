@@ -2,7 +2,6 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FileText, 
-  Building2, 
   User, 
   LogOut,
   Menu,
@@ -17,7 +16,6 @@ import yobemfbLogo from '@/assets/yobemfb-logo.jpeg';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   { icon: FileText, label: 'Loan Applications', href: '/applications/loans' },
-  { icon: Building2, label: 'Account Applications', href: '/applications/accounts' },
   { icon: User, label: 'Profile', href: '/profile' },
 ];
 

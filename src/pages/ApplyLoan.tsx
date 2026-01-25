@@ -130,8 +130,8 @@ export default function ApplyLoan() {
           loan_amount_range: step3Data.loan_amount_range!,
           specific_amount: step3Data.specific_amount!,
           repayment_period_months: step3Data.repayment_period_months!,
-          bank_name: step3Data.bank_name!, // Now stores account type
-          bank_account_number: step3Data.bank_account_number!,
+          bank_name: step3Data.bank_name || '', // Optional - may be empty
+          bank_account_number: step3Data.bank_account_number || '', // Optional - may be empty
           terms_accepted: true,
           is_draft: false,
           current_step: 4,

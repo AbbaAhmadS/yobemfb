@@ -31,8 +31,8 @@ const step3Schema = z.object({
   loan_amount_range: z.enum(['100k_300k', '300k_600k', '600k_1m', 'above_1m']),
   specific_amount: z.number().min(100000, 'Minimum amount is ₦100,000'),
   repayment_period_months: z.number().min(12).max(18),
-  bank_name: z.enum(['savings', 'current', 'corporate']),
-  bank_account_number: z.string().length(10, 'Account number must be 10 digits'),
+  bank_name: z.enum(['savings', 'current', 'corporate', '']).optional(),
+  bank_account_number: z.string().max(10, 'Account number must be 10 digits or less').optional(),
 });
 
 interface Step3Props {
@@ -220,12 +220,12 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
         />
 
         <div className="border-t pt-6 mt-6">
-          <h3 className="font-medium mb-2">Disbursement Account</h3>
+          <h3 className="font-medium mb-2">YobeMFB Bank Account (Optional)</h3>
           <Alert className="mb-4">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Enter your YobeMFB bank account details for verification purposes.
-              This is required for all solar loan applications.
+              If you have a YobeMFB account, enter your details below. If you don't have an account, 
+              you can proceed with your application and open an account later at the bank upon loan approval.
             </AlertDescription>
           </Alert>
 
@@ -235,11 +235,11 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
               name="bank_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>YobeMFB Account Type</FormLabel>
+                  <FormLabel>YobeMFB Account Type (Optional)</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
+                        <SelectValue placeholder="Select account type (if you have one)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -248,7 +248,7 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
                       <SelectItem value="corporate">Corporate Account</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>Your YobeMFB account type</FormDescription>
+                  <FormDescription>Your YobeMFB account type (if applicable)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -259,15 +259,15 @@ export function Step3LoanDetails({ initialData, onSubmit, onBack }: Step3Props) 
               name="bank_account_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>YobeMFB Account Number</FormLabel>
+                  <FormLabel>YobeMFB Account Number (Optional)</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Enter 10-digit account number" 
+                      placeholder="Enter 10-digit account number (if you have one)" 
                       maxLength={10}
                       {...field} 
                     />
                   </FormControl>
-                  <FormDescription>Your YobeMFB account number</FormDescription>
+                  <FormDescription>Leave blank if you don't have an account yet</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   Plus,
   ArrowRight,
-  Building2,
   User,
   LogOut,
   Download,
@@ -21,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { LoanApplication, AccountApplication, getSolarProductName } from '@/types/database';
+import { LoanApplication, getSolarProductName } from '@/types/database';
 import { useApplicationEligibility } from '@/hooks/useApplicationEligibility';
 import { downloadApplicationPDF } from '@/utils/pdfGenerator';
 import { SignedImage } from '@/components/ui/signed-image';
@@ -50,9 +49,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { eligibility, isLoading: eligibilityLoading } = useApplicationEligibility();
   const [loanApplications, setLoanApplications] = useState<LoanApplication[]>([]);
-  const [accountApplications, setAccountApplications] = useState<AccountApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showBankAccountDialog, setShowBankAccountDialog] = useState(false);
   const [showEligibilityDialog, setShowEligibilityDialog] = useState(false);
   const [selectedAppForView, setSelectedAppForView] = useState<LoanApplication | null>(null);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
@@ -66,21 +63,14 @@ export default function Dashboard() {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const [loanRes, accountRes] = await Promise.all([
-        supabase
-          .from('loan_applications')
-          .select('*')
-          .eq('user_id', user!.id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('account_applications')
-          .select('*')
-          .eq('user_id', user!.id)
-          .order('created_at', { ascending: false }),
-      ]);
+      const { data, error } = await supabase
+        .from('loan_applications')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false });
 
-      if (loanRes.data) setLoanApplications(loanRes.data as LoanApplication[]);
-      if (accountRes.data) setAccountApplications(accountRes.data as AccountApplication[]);
+      if (error) throw error;
+      if (data) setLoanApplications(data as LoanApplication[]);
     } catch (error) {
       console.error('Error fetching applications:', error);
     } finally {
@@ -94,12 +84,8 @@ export default function Dashboard() {
       setShowEligibilityDialog(true);
       return;
     }
-
-    if (!profile?.has_bank_account && accountApplications.length === 0) {
-      setShowBankAccountDialog(true);
-    } else {
-      navigate('/apply-loan');
-    }
+    // Navigate directly to loan application form
+    navigate('/apply-loan');
   };
 
   const handleSignOut = async () => {
@@ -215,9 +201,9 @@ export default function Dashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="mb-8">
           <Card 
-            className={`card-elevated group transition-all ${eligibility.canApply ? 'hover:border-primary/50 cursor-pointer' : 'opacity-60'}`} 
+            className={`card-elevated group transition-all max-w-2xl ${eligibility.canApply ? 'hover:border-primary/50 cursor-pointer' : 'opacity-60'}`} 
             onClick={handleApplyForLoan}
           >
             <CardContent className="p-6 flex items-center gap-4">
@@ -233,187 +219,89 @@ export default function Dashboard() {
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
             </CardContent>
           </Card>
-
-          <Card 
-            className="card-elevated group hover:border-primary/50 cursor-pointer transition-all" 
-            onClick={() => navigate('/open-account')}
-          >
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="h-14 w-14 rounded-xl bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
-                <Building2 className="h-7 w-7 text-secondary-foreground" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-display font-semibold text-lg">Open Bank Account</h3>
-                <p className="text-sm text-muted-foreground">Apply for a new bank account</p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Applications Section */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Solar Loan Applications */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="font-display">Solar Loan Applications</CardTitle>
-                  <CardDescription>Your solar loan application history</CardDescription>
-                </div>
-                <Button size="sm" onClick={handleApplyForLoan} disabled={!eligibility.canApply}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  New
+        {/* Solar Loan Applications */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="font-display">Solar Loan Applications</CardTitle>
+                <CardDescription>Your solar loan application history</CardDescription>
+              </div>
+              <Button size="sm" onClick={handleApplyForLoan} disabled={!eligibility.canApply}>
+                <Plus className="h-4 w-4 mr-1" />
+                New
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : loanApplications.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground">No solar loan applications yet</p>
+                <Button className="mt-4" onClick={handleApplyForLoan} disabled={!eligibility.canApply}>
+                  Apply for Your First Solar Loan
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading...</div>
-              ) : loanApplications.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                  <p className="text-muted-foreground">No solar loan applications yet</p>
-                  <Button className="mt-4" onClick={handleApplyForLoan} disabled={!eligibility.canApply}>
-                    Apply for Your First Solar Loan
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {loanApplications.slice(0, 5).map((app) => (
-                    <div 
-                      key={app.id} 
-                      className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          {app.passport_photo_url ? (
-                            <SignedImage 
-                              storedPath={app.passport_photo_url} 
-                              bucket="loan-uploads"
-                              alt="Passport" 
-                              className="h-10 w-10 rounded-lg object-cover"
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <CreditCard className="h-5 w-5 text-primary" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium">{app.application_id}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {getSolarProductName(app.product_type)} • {formatDate(app.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                        {getStatusBadge(app.status)}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setSelectedAppForView(app)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDownloadPDF(app)}
-                          disabled={isDownloading === app.id}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          {isDownloading === app.id ? 'Downloading...' : 'Download PDF'}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Account Applications */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="font-display">Account Applications</CardTitle>
-                  <CardDescription>Your bank account applications</CardDescription>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => navigate('/open-account')}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  New
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading...</div>
-              ) : accountApplications.length === 0 ? (
-                <div className="text-center py-8">
-                  <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                  <p className="text-muted-foreground">No account applications yet</p>
-                  <Button className="mt-4" variant="outline" onClick={() => navigate('/open-account')}>
-                    Open a Bank Account
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {accountApplications.slice(0, 5).map((app) => (
-                    <div 
-                      key={app.id} 
-                      className="flex items-center justify-between p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/applications/account/${app.id}`)}
-                    >
+            ) : (
+              <div className="space-y-4">
+                {loanApplications.slice(0, 10).map((app) => (
+                  <div 
+                    key={app.id} 
+                    className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-secondary/20 flex items-center justify-center">
-                          <Building2 className="h-5 w-5 text-secondary-foreground" />
-                        </div>
+                        {app.passport_photo_url ? (
+                          <SignedImage 
+                            storedPath={app.passport_photo_url} 
+                            bucket="loan-uploads"
+                            alt="Passport" 
+                            className="h-10 w-10 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <CreditCard className="h-5 w-5 text-primary" />
+                          </div>
+                        )}
                         <div>
                           <p className="font-medium">{app.application_id}</p>
                           <p className="text-sm text-muted-foreground">
-                            {app.account_type} • {formatDate(app.created_at)}
+                            {getSolarProductName(app.product_type)} • {formatDate(app.created_at)}
                           </p>
                         </div>
                       </div>
                       {getStatusBadge(app.status)}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedAppForView(app)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownloadPDF(app)}
+                        disabled={isDownloading === app.id}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        {isDownloading === app.id ? 'Downloading...' : 'Download PDF'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
-
-      {/* Bank Account Dialog */}
-      <Dialog open={showBankAccountDialog} onOpenChange={setShowBankAccountDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-display">Do you have a YobeMFB account?</DialogTitle>
-            <DialogDescription>
-              To apply for a loan, you need a Yobe Microfinance Bank account. If you don't have one, 
-              you can open an account first or proceed with your loan application.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => {
-              setShowBankAccountDialog(false);
-              navigate('/open-account');
-            }}>
-              Open Account First
-            </Button>
-            <Button onClick={() => {
-              setShowBankAccountDialog(false);
-              navigate('/apply-loan');
-            }}>
-              I Have an Account
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Eligibility Dialog */}
       <Dialog open={showEligibilityDialog} onOpenChange={setShowEligibilityDialog}>
@@ -428,96 +316,75 @@ export default function Dashboard() {
             </DialogDescription>
           </DialogHeader>
           {eligibility.nextEligibleDate && (
-            <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm font-medium">Next Eligible Date:</p>
-              <p className="text-lg font-bold text-primary">
-                {formatDate(eligibility.nextEligibleDate.toISOString())}
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>You can apply again after <strong>{formatDate(eligibility.nextEligibleDate.toISOString())}</strong></span>
               </p>
             </div>
           )}
           <DialogFooter>
             <Button onClick={() => setShowEligibilityDialog(false)}>
-              Understood
+              I Understand
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* View Application Dialog */}
-      <Dialog open={!!selectedAppForView} onOpenChange={() => setSelectedAppForView(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display">
-              Application Details - {selectedAppForView?.application_id}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedAppForView && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                {selectedAppForView.passport_photo_url && (
-                  <SignedImage 
-                    storedPath={selectedAppForView.passport_photo_url} 
-                    bucket="loan-uploads"
-                    alt="Passport" 
-                    className="h-24 w-24 rounded-lg object-cover"
-                  />
-                )}
-                <div>
-                  <p className="font-semibold text-lg">{selectedAppForView.full_name}</p>
-                  <p className="text-muted-foreground">{selectedAppForView.phone_number}</p>
-                  {getStatusBadge(selectedAppForView.status)}
-                </div>
+      {/* Application Detail Dialog */}
+      {selectedAppForView && (
+        <Dialog open={!!selectedAppForView} onOpenChange={() => setSelectedAppForView(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-display">Application Details</DialogTitle>
+              <DialogDescription>
+                {selectedAppForView.application_id}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Full Name</p>
+                <p className="font-medium">{selectedAppForView.full_name}</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Loan Amount:</span>
-                  <p className="font-medium">{formatAmount(selectedAppForView.specific_amount)}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Repayment Period:</span>
-                  <p className="font-medium">{selectedAppForView.repayment_period_months} Months</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Product Type:</span>
-                  <p className="font-medium">{getSolarProductName(selectedAppForView.product_type)}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Date Applied:</span>
-                  <p className="font-medium">{formatDate(selectedAppForView.created_at)}</p>
-                </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Product</p>
+                <p className="font-medium">{getSolarProductName(selectedAppForView.product_type)}</p>
               </div>
-
-              {/* Approved Amount Display */}
-              {selectedAppForView.status === 'approved' && selectedAppForView.approved_amount && (
-                <div className="p-4 rounded-lg border-2 border-success bg-success/10">
-                  <span className="text-sm text-muted-foreground">Approved Amount:</span>
-                  <p className="text-xl font-bold text-success">{formatAmount(selectedAppForView.approved_amount)}</p>
+              <div>
+                <p className="text-sm text-muted-foreground">Amount</p>
+                <p className="font-medium">{formatAmount(selectedAppForView.specific_amount)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Repayment Period</p>
+                <p className="font-medium">{selectedAppForView.repayment_period_months} months</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Status</p>
+                {getStatusBadge(selectedAppForView.status)}
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Applied On</p>
+                <p className="font-medium">{formatDate(selectedAppForView.created_at)}</p>
+              </div>
+              {selectedAppForView.bank_account_number && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Bank Account</p>
+                  <p className="font-medium">{selectedAppForView.bank_account_number}</p>
                 </div>
               )}
-
-              {/* Decline Reason Display */}
-              {selectedAppForView.status === 'declined' && selectedAppForView.decline_reason && (
-                <div className="p-4 rounded-lg border-2 border-destructive bg-destructive/10">
-                  <span className="text-sm text-muted-foreground">Reason for Decline:</span>
-                  <p className="font-medium text-destructive">{selectedAppForView.decline_reason}</p>
-                </div>
-              )}
-
-              <Button 
-                className="w-full" 
-                onClick={() => {
-                  handleDownloadPDF(selectedAppForView);
-                  setSelectedAppForView(null);
-                }}
-              >
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedAppForView(null)}>
+                Close
+              </Button>
+              <Button onClick={() => handleDownloadPDF(selectedAppForView)}>
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

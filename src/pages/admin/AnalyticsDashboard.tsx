@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { LoanApplication, AccountApplication, ApplicationStatus } from '@/types/database';
+import { LoanApplication, ApplicationStatus } from '@/types/database';
 import { computeSolarLoanBreakdown } from '@/lib/solar-analytics';
 import { downloadCsv, toCsv } from '@/lib/csv';
 import { generateAnalyticsReportHtml } from '@/utils/analyticsReportGenerator';
@@ -52,7 +52,6 @@ import {
 
 interface AnalyticsData {
   loanApplications: LoanApplication[];
-  accountApplications: AccountApplication[];
   loanStats: {
     total: number;
     pending: number;
@@ -68,17 +67,9 @@ interface AnalyticsData {
       long_term: { count: number; totalAmount: number };
     };
   };
-  accountStats: {
-    total: number;
-    pending: number;
-    approved: number;
-    declined: number;
-  };
   trends: {
     loansThisMonth: number;
     loansLastMonth: number;
-    accountsThisMonth: number;
-    accountsLastMonth: number;
   };
 }
 
@@ -108,30 +99,22 @@ export default function AnalyticsDashboard() {
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
       let loanQuery = supabase.from('loan_applications').select('*');
-      let accountQuery = supabase.from('account_applications').select('*');
 
       // Apply date filters if provided
       if (start) {
         const startStr = start.toISOString();
         loanQuery = loanQuery.gte('created_at', startStr);
-        accountQuery = accountQuery.gte('created_at', startStr);
       }
       if (end) {
         const endStr = new Date(end.getTime() + 86400000).toISOString(); // Add 1 day for inclusive end
         loanQuery = loanQuery.lte('created_at', endStr);
-        accountQuery = accountQuery.lte('created_at', endStr);
       }
 
-      const [loanRes, accountRes] = await Promise.all([
-        loanQuery.order('created_at', { ascending: false }),
-        accountQuery.order('created_at', { ascending: false }),
-      ]);
+      const loanRes = await loanQuery.order('created_at', { ascending: false });
 
       if (loanRes.error) throw loanRes.error;
-      if (accountRes.error) throw accountRes.error;
 
       const loans = (loanRes.data || []) as LoanApplication[];
-      const accounts = (accountRes.data || []) as AccountApplication[];
 
       const breakdown = computeSolarLoanBreakdown(loans);
 
@@ -149,36 +132,19 @@ export default function AnalyticsDashboard() {
         productBreakdown: breakdown.byProduct,
       };
 
-      // Calculate account stats
-      const accountStats = {
-        total: accounts.length,
-        pending: accounts.filter(a => a.status === 'pending').length,
-        approved: accounts.filter(a => a.status === 'approved').length,
-        declined: accounts.filter(a => a.status === 'declined').length,
-      };
-
       // Calculate trends
       const loansThisMonth = loans.filter(l => new Date(l.created_at) >= startOfMonth).length;
       const loansLastMonth = loans.filter(l => {
         const date = new Date(l.created_at);
         return date >= startOfLastMonth && date <= endOfLastMonth;
       }).length;
-      const accountsThisMonth = accounts.filter(a => new Date(a.created_at) >= startOfMonth).length;
-      const accountsLastMonth = accounts.filter(a => {
-        const date = new Date(a.created_at);
-        return date >= startOfLastMonth && date <= endOfLastMonth;
-      }).length;
 
       setAnalytics({
         loanApplications: loans,
-        accountApplications: accounts,
         loanStats,
-        accountStats,
         trends: {
           loansThisMonth,
           loansLastMonth,
-          accountsThisMonth,
-          accountsLastMonth,
         },
       });
     } catch (error) {
@@ -515,17 +481,13 @@ export default function AnalyticsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Account Applications</p>
-                <Users className="h-5 w-5 text-secondary" />
+                <p className="text-sm text-muted-foreground">Pending Review</p>
+                <Clock className="h-5 w-5 text-warning" />
               </div>
-              <p className="text-3xl font-bold">{analytics.accountStats.total}</p>
-              <div className="flex items-center gap-1 mt-2 text-sm">
-                {getTrendIcon(analytics.trends.accountsThisMonth, analytics.trends.accountsLastMonth)}
-                <span className={analytics.trends.accountsThisMonth >= analytics.trends.accountsLastMonth ? 'text-success' : 'text-destructive'}>
-                  {getTrendPercentage(analytics.trends.accountsThisMonth, analytics.trends.accountsLastMonth)}%
-                </span>
-                <span className="text-muted-foreground">vs last month</span>
-              </div>
+              <p className="text-3xl font-bold text-warning">{analytics.loanStats.pending}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {analytics.loanStats.underReview} under review
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -535,7 +497,7 @@ export default function AnalyticsDashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Easy Solar All-in-One 1000 (1kWh)</CardTitle>
-              <CardDescription>Totals within selected date range</CardDescription>
+              <CardDescription>₦630,000 per unit</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-end justify-between">
@@ -553,8 +515,8 @@ export default function AnalyticsDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Smart Solar 2000 (2kWh)</CardTitle>
-              <CardDescription>Totals within selected date range</CardDescription>
+              <CardTitle className="text-base">Smart Solar 2000 All-in-One (2kWh)</CardTitle>
+              <CardDescription>₦1,196,000 per unit</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-end justify-between">
@@ -732,68 +694,25 @@ export default function AnalyticsDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">Account Applications by Status</CardTitle>
-              <CardDescription>Current distribution of account applications</CardDescription>
+              <CardTitle className="font-display">This Month Summary</CardTitle>
+              <CardDescription>Current month's solar loan activity</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-warning" />
-                    <span>Pending</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
-                      <div 
-                        className="h-full bg-warning rounded-full"
-                        style={{ width: `${(analytics.accountStats.pending / analytics.accountStats.total) * 100 || 0}%` }}
-                      />
-                    </div>
-                    <span className="font-medium w-8">{analytics.accountStats.pending}</span>
+              <div className="space-y-6">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <div className="text-center">
+                    <p className="text-muted-foreground">Loan Applications This Month</p>
+                    <p className="text-4xl font-bold text-primary">{analytics.trends.loansThisMonth}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                    <span>Approved</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
-                      <div 
-                        className="h-full bg-success rounded-full"
-                        style={{ width: `${(analytics.accountStats.approved / analytics.accountStats.total) * 100 || 0}%` }}
-                      />
-                    </div>
-                    <span className="font-medium w-8">{analytics.accountStats.approved}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-destructive" />
-                    <span>Declined</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
-                      <div 
-                        className="h-full bg-destructive rounded-full"
-                        style={{ width: `${(analytics.accountStats.declined / analytics.accountStats.total) * 100 || 0}%` }}
-                      />
-                    </div>
-                    <span className="font-medium w-8">{analytics.accountStats.declined}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 p-4 rounded-lg bg-muted/50">
-                <h4 className="font-medium mb-2">This Month Summary</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Loan Applications</p>
-                    <p className="text-lg font-semibold">{analytics.trends.loansThisMonth}</p>
+                  <div className="text-center p-3 rounded-lg bg-success/10">
+                    <p className="text-muted-foreground">Approved</p>
+                    <p className="text-xl font-semibold text-success">{analytics.loanStats.approved}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Account Applications</p>
-                    <p className="text-lg font-semibold">{analytics.trends.accountsThisMonth}</p>
+                  <div className="text-center p-3 rounded-lg bg-destructive/10">
+                    <p className="text-muted-foreground">Declined</p>
+                    <p className="text-xl font-semibold text-destructive">{analytics.loanStats.declined}</p>
                   </div>
                 </div>
               </div>
