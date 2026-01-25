@@ -31,12 +31,7 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/auth?mode=signup" className="text-sm text-primary-foreground/80 hover:text-secondary transition-colors">
-                  Apply for Loan
-                </Link>
-              </li>
-              <li>
-                <Link to="/auth?mode=signup" className="text-sm text-primary-foreground/80 hover:text-secondary transition-colors">
-                  Open Account
+                  Apply for Solar Loan
                 </Link>
               </li>
               <li>
@@ -47,15 +42,11 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Services */}
           <div>
-            <h3 className="font-display font-semibold text-lg mb-4">Our Services</h3>
+            <h3 className="font-display font-semibold text-lg mb-4">Our Solar Products</h3>
             <ul className="space-y-2">
               <li className="text-sm text-primary-foreground/80">Easy Solar All-in-One 1000</li>
-              <li className="text-sm text-primary-foreground/80">Smart Solar 2000</li>
-              <li className="text-sm text-primary-foreground/80">Savings Account</li>
-              <li className="text-sm text-primary-foreground/80">Current Account</li>
-              <li className="text-sm text-primary-foreground/80">Corporate Account</li>
+              <li className="text-sm text-primary-foreground/80">Smart Solar 2000 All-in-One</li>
             </ul>
           </div>
 

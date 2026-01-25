@@ -18,14 +18,12 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Dashboard from "./pages/Dashboard";
 import ApplyLoan from "./pages/ApplyLoan";
-import OpenAccount from "./pages/OpenAccount";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CreditAdminDashboard from "./pages/admin/CreditAdminDashboard";
 import CreateApplication from "./pages/admin/CreateApplication";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
-import OperationsAnalyticsDashboard from "./pages/admin/OperationsAnalyticsDashboard";
 import AdminTools from "./pages/admin/AdminTools";
 import NotFound from "./pages/NotFound";
 
@@ -59,7 +57,6 @@ const App = () => (
             }>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/apply-loan" element={<ApplyLoan />} />
-              <Route path="/open-account" element={<OpenAccount />} />
             </Route>
 
             {/* Admin Routes */}
@@ -77,11 +74,6 @@ const App = () => (
             <Route path="/admin/analytics" element={
               <ProtectedRoute requireAdmin>
                 <AnalyticsDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/operations-analytics" element={
-              <ProtectedRoute requireAdmin allowedRoles={['operations']}>
-                <OperationsAnalyticsDashboard />
               </ProtectedRoute>
             } />
             <Route path="/admin/create-application" element={

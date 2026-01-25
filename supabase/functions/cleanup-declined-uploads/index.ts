@@ -64,24 +64,8 @@ serve(async (req) => {
       });
     }
 
-    // 3) Find declined account applications older than retentionDays
-    const { data: declinedAccounts, error: accountsError } = await supabase
-      .from("account_applications")
-      .select("id, user_id, updated_at, status")
-      .eq("status", "declined")
-      .lt("updated_at", cutoffISO);
-
-    if (accountsError) {
-      console.error("Failed to fetch declined accounts:", accountsError);
-      return new Response(JSON.stringify({ error: "Failed to fetch accounts" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const declinedUserIds = new Set<string>();
     (declinedLoans ?? []).forEach((loan) => declinedUserIds.add(loan.user_id));
-    (declinedAccounts ?? []).forEach((acc) => declinedUserIds.add(acc.user_id));
 
     if (declinedUserIds.size === 0) {
       console.log("No declined applications older than retention period. Nothing to delete.");
@@ -92,7 +76,7 @@ serve(async (req) => {
 
     console.log(`Found ${declinedUserIds.size} user(s) with old declined applications.`);
 
-    // 4) Delete storage objects for these users (best-effort)
+    // 3) Delete storage objects for these users (best-effort)
     let totalDeleted = 0;
     for (const bucket of STORAGE_BUCKETS) {
       for (const uid of declinedUserIds) {
@@ -122,7 +106,6 @@ serve(async (req) => {
       JSON.stringify({
         ok: true,
         declinedLoans: (declinedLoans ?? []).length,
-        declinedAccounts: (declinedAccounts ?? []).length,
         deletedFiles: totalDeleted,
       }),
       {

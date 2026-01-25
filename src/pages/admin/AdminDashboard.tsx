@@ -55,24 +55,18 @@ export default function AdminDashboard() {
         .eq('is_active', true)
         .single();
 
-      if (data) {
-        const userRole = data.role as AdminRole;
-        setRole(userRole);
-        
-        // Redirect credit admins to their dedicated dashboard
-        if (userRole === 'credit') {
-          navigate('/admin/credit-dashboard');
-          return;
+        if (data) {
+          const userRole = data.role as AdminRole;
+          setRole(userRole);
+          
+          // Redirect credit admins to their dedicated dashboard
+          if (userRole === 'credit') {
+            navigate('/admin/credit-dashboard');
+            return;
+          }
+        } else {
+          navigate('/admin/login');
         }
-        
-        // Redirect Account Opening Department to their dashboard
-        if (userRole === 'operations') {
-          navigate('/admin/operations-analytics');
-          return;
-        }
-      } else {
-        navigate('/admin/login');
-      }
     };
 
     fetchRoleAndRedirect();

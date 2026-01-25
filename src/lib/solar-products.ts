@@ -53,7 +53,7 @@ export const solarProducts: SolarProductInfo[] = [
   },
   {
     id: "smart_2000",
-    title: "Smart Solar 2000",
+    title: "Smart Solar 2000 All-in-One",
     subtitle: "All-in-One Solar Power System (2 kWh)",
     price: 1196000,
     imageSrc: smartSolar2000Image,

@@ -152,7 +152,7 @@ export const SOLAR_PRODUCTS = {
     description: 'Compact all-in-one solar system for essential home power needs',
   },
   long_term: {
-    name: 'Smart Solar 2000 (2kWh)',
+    name: 'Smart Solar 2000 All-in-One (2kWh)',
     price: 1196000,
     description: 'High-capacity all-in-one solar system for full household power needs',
   },
